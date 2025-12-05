@@ -1,43 +1,56 @@
-
 <!DOCTYPE html>
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PharmaHR Manager</title>
+    <meta name="description" content="Hệ thống quản lý Khoa Dược" />
+    
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
       body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-      /* Custom scrollbar for better aesthetics */
+      #root { min-height: 100vh; }
+      /* Custom scrollbar */
       ::-webkit-scrollbar { width: 6px; height: 6px; }
       ::-webkit-scrollbar-track { background: transparent; }
       ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
       ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
+
     <script>
-      // Polyfill for process.env to work in browser environment
+      // FIX LỖI CRITICAL: Polyfill process.env cho trình duyệt
       window.process = {
         env: {
-          API_KEY: "AIzaSyAw5ZDuH0u7G2LD8qUy2M06EwFG6tz7KIA"
+          NODE_ENV: 'production',
+          API_KEY: "AIzaSyAw5ZDuH0u7G2LD8qUy2M06EwFG6tz7KIA" 
         }
       };
     </script>
   <script type="importmap">
 {
   "imports": {
-    "recharts": "https://aistudiocdn.com/recharts@^3.5.1",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.31.0",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
-    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.10.0",
+    "vite": "https://aistudiocdn.com/vite@^7.2.6",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.10.1",
     "react/": "https://aistudiocdn.com/react@^19.2.1/",
     "react": "https://aistudiocdn.com/react@^19.2.1",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/"
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
+    "recharts": "https://aistudiocdn.com/recharts@^3.5.1",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.31.0"
   }
 }
 </script>
 </head>
   <body>
     <div id="root"></div>
+    
+    <!-- DÒNG LỆNH QUAN TRỌNG ĐỂ APP CHẠY ĐƯỢC TRÊN VERCEL -->
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>
