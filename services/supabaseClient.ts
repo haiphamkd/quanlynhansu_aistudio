@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 const PROVIDED_URL = 'https://pghoilgkweifpiyeiggn.supabase.co';
 const PROVIDED_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnaG9pbGdrd2VpZnBpeWVpZ2duIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5MjczMTQsImV4cCI6MjA4MDUwMzMxNH0.T3XMFmZRS7ZUN8e8NQv8LG23Xwb_TgX1TMt9LwaJHEo';
 
-// Hàm lấy biến môi trường an toàn (tránh lỗi crash nếu import.meta.env không tồn tại)
+// Hàm lấy biến môi trường an toàn
 const getEnv = (key: string) => {
   try {
     // @ts-ignore
