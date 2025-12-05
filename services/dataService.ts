@@ -72,6 +72,7 @@ class DataService {
     return emp;
   }
 
+  // Hỗ trợ Import nhiều nhân viên
   async importEmployees(employees: Employee[]): Promise<{success: boolean, error?: string}> {
     const dbItems = employees.map(emp => this.mapEmployeeToDb(emp));
     const { error } = await supabase.from('nhan_vien').insert(dbItems);
@@ -145,6 +146,7 @@ class DataService {
         trang_thai: r.status,
         ghi_chu: r.notes
     }));
+    // Dùng upsert để cập nhật nếu đã có chấm công ngày đó
     const { error } = await supabase.from('cham_cong').upsert(dbRecords); 
     if (error) console.error("Save attendance error:", error);
     return !error;
@@ -166,6 +168,7 @@ class DataService {
   }
 
   async addFundTransaction(trans: FundTransaction): Promise<FundTransaction> {
+    // Lấy số dư cuối cùng
     const { data: lastTrans } = await supabase.from('quy_khoa').select('so_du_cuoi').order('id', { ascending: false }).limit(1).single();
     const lastBalance = lastTrans ? lastTrans.so_du_cuoi : 0;
     const newBalance = trans.type === 'Thu' ? lastBalance + trans.amount : lastBalance - trans.amount;
@@ -208,6 +211,7 @@ class DataService {
         ma_nguoi_bao_cao: report.reporterId,
         dinh_kem: report.attachmentUrls
     };
+    // Nếu ID là số (từ DB) thì update, nếu string (mock/new) thì insert
     if (typeof report.id === 'number') {
         await supabase.from('bao_cao_don').update(dbItem).eq('id', report.id);
     } else {
@@ -335,8 +339,11 @@ class DataService {
   async getDropdowns(): Promise<TempData[]> {
     const { data } = await supabase.from('danh_muc').select('*');
     if (!data || data.length === 0) {
+        // Fallback data nếu bảng rỗng
         return [
             { type: 'TrinhDo', value: 'Dược sĩ Đại học' },
+            { type: 'TrinhDo', value: 'Dược sĩ CKI' },
+            { type: 'TrinhDo', value: 'Dược sĩ CKII' },
             { type: 'TrangThai', value: 'Đang làm việc' }
         ];
     }

@@ -1,4 +1,3 @@
-
 // Enum definitions
 export enum EmployeeStatus {
   ACTIVE = "Đang làm việc",
@@ -12,7 +11,6 @@ export enum TransactionType {
   EXPENSE = "Chi"
 }
 
-// Updated based on VN Hospital standards
 export enum EvaluationRank {
   EXCELLENT = "Hoàn thành xuất sắc nhiệm vụ",
   GOOD = "Hoàn thành tốt nhiệm vụ",
@@ -20,95 +18,114 @@ export enum EvaluationRank {
   LIMITED = "Hoàn thành nhiệm vụ nhưng còn hạn chế"
 }
 
+export type UserRole = 'admin' | 'manager' | 'user';
+
+export interface User {
+  username: string; // ten_dang_nhap
+  password?: string; // mat_khau (chỉ dùng khi login/create)
+  role: UserRole; // vai_tro
+  name: string; // ho_ten
+  employeeId?: string; // ma_nhan_vien
+}
+
 // Data Models
 export interface Employee {
-  id: string; // Mã nhân viên
-  fullName: string;
-  dob: string; // Ngày sinh
-  gender: 'Nam' | 'Nữ';
-  position: string; // Chức vụ
-  qualification: string; // Trình độ chuyên môn
-  phone: string;
-  email: string;
-  
-  // New fields
-  contractDate: string; // Ngày hợp đồng
-  joinDate: string; // Ngày vào làm
-  hometown: string; // Quê quán
-  permanentAddress: string; // Thường trú
-  idCardNumber: string; // CCCD/CMND
-  idCardDate: string; // Ngày cấp
-  idCardPlace: string; // Nơi cấp
-  
-  status: EmployeeStatus | string; // Can be dynamic from Temp
-  avatarUrl?: string; // Base64 or URL
-  fileUrl?: string; // Hồ sơ drive
-  notes?: string;
+  id: string; // ma_nv
+  fullName: string; // ho_ten
+  dob: string; // ngay_sinh
+  gender: 'Nam' | 'Nữ'; // gioi_tinh
+  position: string; // chuc_vu
+  qualification: string; // trinh_do
+  phone: string; // sdt
+  email: string; // email
+  contractDate: string; // ngay_hop_dong
+  joinDate: string; // ngay_vao_lam
+  hometown: string; // que_quan
+  permanentAddress: string; // thuong_tru
+  idCardNumber: string; // cccd
+  idCardDate: string; // ngay_cap
+  idCardPlace: string; // noi_cap
+  status: string; // trang_thai
+  avatarUrl?: string; // anh_dai_dien
+  fileUrl?: string; // ho_so_url
+  notes?: string; // ghi_chu
 }
 
 export interface Attendance {
   id: string;
-  employeeId: string;
-  employeeName: string;
-  date: string; // YYYY-MM-DD
-  timeIn?: string; // HH:mm:ss - Giờ quét thực tế
-  shift: 'Sáng' | 'Chiều' | 'Cả ngày';
-  status: 'Đi làm' | 'Nghỉ phép' | 'Nghỉ bệnh' | 'Trễ' | 'Khác' | 'Chưa quét';
-  notes?: string;
+  employeeId: string; // ma_nv
+  employeeName: string; // ten_nv
+  date: string; // ngay
+  timeIn?: string; // gio_vao
+  shift: string; // ca_truc
+  status: string; // trang_thai
+  notes?: string; // ghi_chu
 }
 
 export interface FundTransaction {
   id: string;
-  date: string;
-  type: TransactionType;
-  content: string;
-  performer: string; // Người thực hiện
-  amount: number;
-  balanceAfter: number; // Số dư cuối (calculated)
+  date: string; // ngay
+  type: string; // loai
+  content: string; // noi_dung
+  performer: string; // nguoi_thuc_hien
+  amount: number; // so_tien
+  balanceAfter: number; // so_du_cuoi
 }
 
 export interface PrescriptionReport {
-  id: string;
-  date: string;
-  totalIssued: number; // Đã cấp
-  notReceived: number; // Chưa nhận
-  reason?: string;
-  reporter: string; // Username/Name
-  reporterId: string; // To check permission
-  attachmentUrls?: string[]; // Nhiều file, stored as string separated by semicolon
+  id: string | number;
+  date: string; // ngay
+  totalIssued: number; // da_cap
+  notReceived: number; // chua_nhan
+  reason?: string; // ly_do
+  reporter: string; // nguoi_bao_cao
+  reporterId: string; // ma_nguoi_bao_cao
+  attachmentUrls?: string[]; // dinh_kem
 }
 
 export interface AnnualEvaluation {
-  id: string;
-  year: number;
-  employeeId: string;
-  fullName: string;
-  position: string; // Chức vụ tại thời điểm đánh giá
-  
-  // Scores
-  scoreProfessional: number; 
-  scoreAttitude: number; 
-  scoreDiscipline: number; 
-  averageScore: number;
-  
-  rank: EvaluationRank;
-  
-  // Rewards
-  rewardProposal: 'Sở Y tế' | 'Bệnh viện' | 'Không' | string;
-  rewardTitle: 'Chiến sĩ thi đua' | 'Giấy khen' | 'Lao động tiên tiến' | 'Không' | string;
-  
-  notes?: string;
+  id: string | number;
+  year: number; // nam
+  employeeId: string; // ma_nv
+  fullName: string; // ho_ten
+  position: string; // chuc_vu
+  scoreProfessional: number; // diem_chuyen_mon
+  scoreAttitude: number; // diem_thai_do
+  scoreDiscipline: number; // diem_ky_luat
+  averageScore: number; // diem_trung_binh
+  rank: string; // xep_loai
+  rewardProposal: string; // de_nghi_khen
+  rewardTitle: string; // danh_hieu
+  notes?: string; // ghi_chu
 }
 
 export interface Proposal {
+  id: string | number;
+  date: string; // ngay
+  title: string; // tieu_de
+  content: string; // noi_dung
+  submitter: string; // nguoi_trinh
+  fileUrl?: string; // file_url
+  status: string; // trang_thai
+}
+
+export interface Shift {
   id: string;
-  date: string;
-  title: string; 
-  content: string;
-  submitter: string; 
-  fileUrl?: string; // Link drive or Base64
-  status: 'Chờ duyệt' | 'Đã duyệt' | 'Từ chối';
-  notes?: string;
+  weekStart: string; // tuan_bat_dau
+  weekEnd: string; // tuan_ket_thuc
+  ca: string; // ca
+  mon: string; // thu_2
+  tue: string; // thu_3
+  wed: string; // thu_4
+  thu: string; // thu_5
+  fri: string; // thu_6
+  sat: string; // thu_7
+  sun: string; // cn
+}
+
+export interface TempData {
+  type: string; // loai
+  value: string; // gia_tri
 }
 
 export interface MenuItem {
@@ -116,32 +133,5 @@ export interface MenuItem {
   label: string;
   icon: any;
   path: string;
-}
-
-export interface User {
-  username: string;
-  password?: string; // Only for backend logic
-  role: 'admin' | 'staff';
-  name: string;
-  employeeId?: string; // Link to employee record
-}
-
-// New Types
-export interface Shift {
-  id: string; // Format: TuanStart-Ca (e.g., 2023-10-02-Sang)
-  weekStart: string; // YYYY-MM-DD (Monday)
-  weekEnd: string; // YYYY-MM-DD (Sunday)
-  ca: 'Sáng' | 'Chiều' | 'Đêm';
-  mon: string; // Employee Name(s) or ID
-  tue: string;
-  wed: string;
-  thu: string;
-  fri: string;
-  sat: string;
-  sun: string;
-}
-
-export interface TempData {
-  type: string; // 'TrinhDo', 'TrangThai', 'NoiCap'
-  value: string;
+  allowedRoles?: UserRole[];
 }
