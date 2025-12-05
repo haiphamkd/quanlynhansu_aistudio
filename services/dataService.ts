@@ -19,15 +19,7 @@ class DataService {
         .eq('mat_khau', password)
         .single();
 
-      if (error) {
-        // Handle specific Supabase errors if needed, otherwise generic message
-        if (error.code === 'PGRST116') { // No rows found
-           return { success: false, error: 'Sai tên đăng nhập hoặc mật khẩu' };
-        }
-        return { success: false, error: error.message };
-      }
-
-      if (!data) {
+      if (error || !data) {
         return { success: false, error: 'Sai tên đăng nhập hoặc mật khẩu' };
       }
 
@@ -35,7 +27,7 @@ class DataService {
         success: true, 
         user: { 
           username: data.ten_dang_nhap, 
-          // Default to 'user' if role is missing, null, or invalid in DB
+          // Default to 'user' if role is missing or invalid in DB
           role: (data.vai_tro as UserRole) || 'user', 
           name: data.ho_ten,
           employeeId: data.ma_nhan_vien
