@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { FileText, Paperclip, Plus, Trash2, Pencil, CheckCircle } from 'lucide-react';
 import GenericTable from '../components/GenericTable';
@@ -46,10 +45,13 @@ const ProposalManager: React.FC = () => {
     setIsModalOpen(false);
   };
 
+  // Fixed signature to accept string | number to match GenericTable constraints
   const handleDelete = (id: string | number) => {
-    if(confirm("Xóa tờ trình này?")) {
-      // Logic delete would go here
+    if(confirm("Bạn có chắc chắn muốn xóa tờ trình này?")) {
+      // TODO: Call API to delete proposal
       alert("Đã xóa (Mô phỏng)");
+      // refresh list after delete
+      // loadProposals(); 
     }
   };
 

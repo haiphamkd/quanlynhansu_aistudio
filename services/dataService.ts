@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient';
-import { Employee, FundTransaction, PrescriptionReport, Attendance, AnnualEvaluation, Proposal, User, UserRole, Shift, TempData } from '../types';
+import { Employee, FundTransaction, PrescriptionReport, Attendance, AnnualEvaluation, Proposal, User, Shift, TempData, UserRole } from '../types';
 
 class DataService {
   private isDemoMode: boolean = false;
@@ -7,7 +7,7 @@ class DataService {
   setDemoMode(enabled: boolean) { this.isDemoMode = enabled; }
   isDemo() { return this.isDemoMode; }
 
-  // --- 1. NGƯỜI DÙNG & ĐĂNG NHẬP (Bảng: nguoi_dung) ---
+  // --- 1. ĐĂNG NHẬP (Bảng: nguoi_dung) ---
   async login(username: string, password: string): Promise<{success: boolean, user?: User, error?: string}> {
     if (this.isDemoMode) return { success: true, user: { username: 'demo', role: 'admin', name: 'Demo Admin' } };
 
@@ -19,7 +19,15 @@ class DataService {
         .eq('mat_khau', password)
         .single();
 
-      if (error || !data) {
+      if (error) {
+        // Handle specific Supabase errors if needed, otherwise generic message
+        if (error.code === 'PGRST116') { // No rows found
+           return { success: false, error: 'Sai tên đăng nhập hoặc mật khẩu' };
+        }
+        return { success: false, error: error.message };
+      }
+
+      if (!data) {
         return { success: false, error: 'Sai tên đăng nhập hoặc mật khẩu' };
       }
 
@@ -27,6 +35,7 @@ class DataService {
         success: true, 
         user: { 
           username: data.ten_dang_nhap, 
+          // Default to 'user' if role is missing, null, or invalid in DB
           role: (data.vai_tro as UserRole) || 'user', 
           name: data.ho_ten,
           employeeId: data.ma_nhan_vien
@@ -35,22 +44,6 @@ class DataService {
     } catch (e: any) {
       return { success: false, error: 'Lỗi kết nối CSDL Supabase: ' + e.message };
     }
-  }
-
-  async createAccount(user: User): Promise<{success: boolean, error?: string}> {
-    const { error } = await supabase.from('nguoi_dung').insert({
-      ten_dang_nhap: user.username,
-      mat_khau: user.password,
-      vai_tro: user.role,
-      ho_ten: user.name,
-      ma_nhan_vien: user.employeeId
-    });
-    
-    if (error) {
-      if (error.code === '23505') return { success: false, error: 'Tên đăng nhập đã tồn tại' };
-      return { success: false, error: error.message };
-    }
-    return { success: true };
   }
 
   // --- 2. NHÂN VIÊN (Bảng: nhan_vien) ---
@@ -81,6 +74,23 @@ class DataService {
     }));
   }
 
+  async addEmployee(emp: Employee): Promise<Employee> {
+    const dbItem = this.mapEmployeeToDb(emp);
+    const { error } = await supabase.from('nhan_vien').insert(dbItem);
+    if (error) throw new Error(error.message);
+    return emp;
+  }
+
+  async importEmployees(employees: Employee[]): Promise<{success: boolean, error?: string}> {
+    const dbItems = employees.map(emp => this.mapEmployeeToDb(emp));
+    const { error } = await supabase.from('nhan_vien').insert(dbItems);
+    if (error) {
+        console.error("Import error:", error);
+        return { success: false, error: error.message };
+    }
+    return { success: true };
+  }
+
   private mapEmployeeToDb(emp: Employee) {
     return {
       ma_nv: emp.id,
@@ -105,13 +115,6 @@ class DataService {
     };
   }
 
-  async addEmployee(emp: Employee): Promise<Employee> {
-    const dbItem = this.mapEmployeeToDb(emp);
-    const { error } = await supabase.from('nhan_vien').insert(dbItem);
-    if (error) throw new Error(error.message);
-    return emp;
-  }
-
   async updateEmployee(emp: Employee): Promise<Employee> {
     const dbItem = this.mapEmployeeToDb(emp);
     const { error } = await supabase.from('nhan_vien').update(dbItem).eq('ma_nv', emp.id);
@@ -122,16 +125,6 @@ class DataService {
   async deleteEmployee(id: string): Promise<{success: boolean, error?: string}> {
     const { error } = await supabase.from('nhan_vien').delete().eq('ma_nv', id);
     if (error) return { success: false, error: error.message };
-    return { success: true };
-  }
-
-  async importEmployees(employees: Employee[]): Promise<{success: boolean, error?: string}> {
-    const dbItems = employees.map(emp => this.mapEmployeeToDb(emp));
-    const { error } = await supabase.from('nhan_vien').insert(dbItems);
-    if (error) {
-        console.error("Import error:", error);
-        return { success: false, error: error.message };
-    }
     return { success: true };
   }
 
@@ -161,9 +154,8 @@ class DataService {
         trang_thai: r.status,
         ghi_chu: r.notes
     }));
-    // Upsert để cập nhật nếu đã có
     const { error } = await supabase.from('cham_cong').upsert(dbRecords); 
-    if (error) console.error("Lỗi lưu chấm công:", error);
+    if (error) console.error("Save attendance error:", error);
     return !error;
   }
 
@@ -348,7 +340,7 @@ class DataService {
     return !error;
   }
 
-  // --- 9. DANH MỤC (Bảng: danh_muc) ---
+  // --- 9. DROPDOWNS (Bảng: danh_muc) ---
   async getDropdowns(): Promise<TempData[]> {
     const { data } = await supabase.from('danh_muc').select('*');
     if (!data || data.length === 0) {
@@ -361,6 +353,23 @@ class DataService {
         type: item.loai,
         value: item.gia_tri
     }));
+  }
+  
+  // Account Creation
+  async createAccount(user: User): Promise<{success: boolean, error?: string}> {
+    const { error } = await supabase.from('nguoi_dung').insert({
+      ten_dang_nhap: user.username,
+      mat_khau: user.password,
+      vai_tro: user.role,
+      ho_ten: user.name,
+      ma_nhan_vien: user.employeeId
+    });
+    
+    if (error) {
+      if (error.code === '23505') return { success: false, error: 'Tên đăng nhập đã tồn tại' };
+      return { success: false, error: error.message };
+    }
+    return { success: true };
   }
 }
 
