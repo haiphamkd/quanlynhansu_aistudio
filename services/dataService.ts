@@ -1,7 +1,7 @@
 import { Employee, FundTransaction, PrescriptionReport, Attendance, AnnualEvaluation, Proposal, User, Shift, TempData } from '../types';
 import { MOCK_EMPLOYEES, MOCK_FUNDS, MOCK_REPORTS, MOCK_ATTENDANCE, MOCK_EVALUATIONS, MOCK_PROPOSALS } from './mockData';
 
-// LINK CỨNG WEB APP CỦA BẠN
+// LINK CỨNG WEB APP
 const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbxkVcJmyvpGKSD7ZJSbtN4xtPBRxj_fQGzdWZRd-ALgWtFVAcNh_Hpjr6MhVhsixmLP3A/exec';
 
 class DataService {
@@ -32,26 +32,17 @@ class DataService {
     localStorage.setItem('pharmahr_api_url', url);
   }
 
-  getApiUrl() {
-    return this.apiUrl;
-  }
-
-  setDemoMode(enabled: boolean) {
-    this.isDemoMode = enabled;
-  }
-
-  isDemo() {
-    return this.isDemoMode;
-  }
+  getApiUrl() { return this.apiUrl; }
+  setDemoMode(enabled: boolean) { this.isDemoMode = enabled; }
+  isDemo() { return this.isDemoMode; }
 
   async testConnection(): Promise<{success: boolean, message: string}> {
     if (!this.apiUrl) return { success: false, message: 'Chưa cấu hình URL' };
     try {
-       // Test connection using simple GET with no-cors to avoid network error throw
        await fetch(`${this.apiUrl}?action=test`, {
           method: 'POST',
           mode: 'no-cors', 
-          body: new URLSearchParams({ action: 'test' })
+          body: JSON.stringify({ action: 'test' })
        });
        return { success: true, message: 'Đã gửi tín hiệu đến Server' };
     } catch (e: any) {
@@ -59,23 +50,19 @@ class DataService {
     }
   }
 
-  // --- CORE API CALLER (FORM DATA VERSION) ---
+  // --- CORE API CALLER (JSON TEXT MODE - FINAL) ---
   private async callApi(action: string, data: any = {}) {
     if (this.isDemoMode) return null;
     
     try {
-      // SỬ DỤNG URLSearchParams: Đây là chìa khóa để fix lỗi Login
-      // Nó gửi data dạng application/x-www-form-urlencoded
-      // Google Apps Script xử lý cái này rất mượt và Browser không chặn CORS
-      const formData = new URLSearchParams();
-      formData.append('action', action);
-      // Đóng gói data phức tạp vào 1 field JSON string
-      formData.append('data', JSON.stringify(data));
-
+      const payload = { action, ...data };
+      
       const response = await fetch(this.apiUrl, {
         method: 'POST',
-        body: formData
-        // Không set Header Content-Type thủ công, để browser tự set
+        redirect: 'follow',
+        // QUAN TRỌNG: Không gửi Header Content-Type để tránh CORS Preflight
+        // Gửi body dạng chuỗi JSON
+        body: JSON.stringify(payload)
       });
 
       const text = await response.text();
@@ -85,12 +72,18 @@ class DataService {
         if (json.error) throw new Error(json.error);
         return json;
       } catch (parseError) {
-        if (text.includes('<!DOCTYPE html>')) {
-           throw new Error("URL sai hoặc Script lỗi (Trả về HTML)");
+        // Phân tích lỗi cụ thể
+        if (text.includes('<!DOCTYPE html>')) throw new Error("Lỗi Script Google (HTML Response). Kiểm tra lại Link Web App.");
+        
+        // Nếu Server trả về chính nội dung gửi lên (Lỗi Echo) -> Backend chưa update
+        if (text.includes('action=') || text.includes('"action":')) {
+            throw new Error("Backend chưa cập nhật code mới (Vui lòng Deploy lại GAS: New Version)");
         }
-        throw parseError;
+        
+        console.error("Raw response:", text);
+        throw new Error("Dữ liệu trả về không hợp lệ: " + text.substring(0, 50));
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(`API Call Failed [${action}]:`, error);
       throw error;
     }
@@ -108,11 +101,10 @@ class DataService {
       if (res && res.success) return res;
       return { success: false, error: res?.error || 'Đăng nhập thất bại' };
     } catch (e: any) {
-      return { success: false, error: 'Lỗi: ' + e.message };
+      return { success: false, error: e.message };
     }
   }
 
-  // Wrappers
   async getEmployees(): Promise<Employee[]> { if (!this.isDemoMode) { try { const d = await this.callApi('getEmployees'); if(Array.isArray(d)) return d; } catch(e){} } return [...this.employees]; }
   async addEmployee(emp: Employee): Promise<Employee> { if(!this.isDemoMode) await this.callApi('addEmployee', emp); this.employees.push(emp); return emp; }
   async updateEmployee(emp: Employee): Promise<Employee> { if(!this.isDemoMode) await this.callApi('updateEmployee', emp); return emp; }

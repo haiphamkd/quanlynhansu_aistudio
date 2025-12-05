@@ -1,7 +1,7 @@
 export const GOOGLE_APPS_SCRIPT_CODE = `
 /**
- * PHARMA HR BACKEND - FORM DATA SUPPORT
- * Folder ID: 1QiPcqn--e7XH2pQDgth_rJM6fLNpmJGZ
+ * PHARMA HR BACKEND - JSON MODE (FINAL)
+ * ID: 1QiPcqn--e7XH2pQDgth_rJM6fLNpmJGZ
  */
 const DRIVE_FOLDER_ID = "1QiPcqn--e7XH2pQDgth_rJM6fLNpmJGZ"; 
 
@@ -34,29 +34,43 @@ function doGet(e) { return handleRequest(e); }
 function doPost(e) { return handleRequest(e); }
 
 function handleRequest(e) {
+  const lock = LockService.getScriptLock();
+  lock.tryLock(5000);
+
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    let action = e.parameter.action;
     let postData = {};
 
-    // SUPPORT FORM DATA (URL ENCODED)
-    if (e.parameter.data) {
-       try { postData = JSON.parse(e.parameter.data); } catch (err) {}
-    } else if (e.postData && e.postData.contents) {
-       try { postData = JSON.parse(e.postData.contents); } catch (err) {}
+    // 1. Cố gắng parse JSON từ postData.contents (Text/Plain)
+    if (e.postData && e.postData.contents) {
+       try {
+         postData = JSON.parse(e.postData.contents);
+       } catch (err) {}
+    } 
+    // 2. Fallback: Nếu gửi form data
+    else if (e.parameter.data) {
+       try {
+         postData = JSON.parse(e.parameter.data);
+       } catch (err) {}
     }
-    
-    if (postData.action) action = postData.action;
+
+    // 3. Lấy action
+    let action = e.parameter.action || postData.action;
     let result = {};
 
-    if (action === 'test') result = { status: 'ok', message: 'Connected' };
+    if (action === 'test') {
+       result = { success: true, message: 'Kết nối thành công tới Google Apps Script (JSON Mode)' };
+    }
     else if (action === 'login') {
        const users = getData(ss, 'Users');
-       // Clean comparison
        const user = users.find(u => String(u.username).trim() == String(postData.username).trim() && String(u.password).trim() == String(postData.password).trim());
-       if (user) result = { success: true, user: { username: user.username, role: user.role, name: user.fullName, employeeId: user.employeeId } };
-       else result = { error: 'Sai tên đăng nhập hoặc mật khẩu' };
+       if (user) {
+         result = { success: true, user: { username: user.username, role: user.role, name: user.fullName, employeeId: user.employeeId } };
+       } else {
+         result = { error: 'Tên đăng nhập hoặc mật khẩu không đúng' };
+       }
     }
+    // GETTERS
     else if (action === 'getEmployees') result = getData(ss, 'NhanVien');
     else if (action === 'getFunds') result = getData(ss, 'QuyKhoa');
     else if (action === 'getReports') result = getData(ss, 'DonThuoc');
@@ -67,6 +81,7 @@ function handleRequest(e) {
     else if (action === 'getDropdowns') result = getData(ss, 'Temp');
     else if (action === 'getUsers') result = getData(ss, 'Users');
 
+    // SETTERS
     else if (action === 'addEmployee') addRow(ss, 'NhanVien', postData);
     else if (action === 'updateEmployee') updateRow(ss, 'NhanVien', postData, 0);
     else if (action === 'deleteEmployee') deleteRow(ss, 'NhanVien', postData.id, 0);
@@ -99,7 +114,9 @@ function handleRequest(e) {
     return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
 
   } catch (e) {
-    return ContentService.createTextOutput(JSON.stringify({error: 'Server Error: ' + e.toString()})).setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(JSON.stringify({error: e.toString()})).setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    lock.releaseLock();
   }
 }
 
