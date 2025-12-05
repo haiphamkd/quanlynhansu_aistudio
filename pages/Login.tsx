@@ -13,7 +13,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Mặc định là đã cấu hình vì đã hardcode key trong supabaseClient.ts
+  // Supabase is now hardcoded in supabaseClient.ts, so config is always true
   const isConfigured = true;
 
   const handleDemoMode = () => {
@@ -26,12 +26,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setError('');
     setLoading(true);
     
-    if (!isConfigured) {
-        setError('Lỗi cấu hình hệ thống.');
-        setLoading(false);
-        return;
-    }
-
     try {
       const res = await dataService.login(username, password);
       if (res.success && res.user) {
@@ -75,7 +69,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 <input
                   type="text"
                   className="block w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-lg text-gray-900 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent sm:text-sm transition-all"
-                  placeholder="Nhập tên đăng nhập"
+                  placeholder="admin"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                 />
