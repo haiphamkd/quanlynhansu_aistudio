@@ -1,14 +1,14 @@
 
 export const formatDateVN = (isoDateString: string): string => {
   if (!isoDateString) return '';
-  try {
-    // If it's already in standard format (simple check), just return
-    if (isoDateString.match(/^\d{2}\/\d{2}\/\d{4}$/)) return isoDateString;
+  
+  // Check if already in dd/mm/yyyy format
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(isoDateString)) return isoDateString;
 
+  try {
     const date = new Date(isoDateString);
     if (isNaN(date.getTime())) return isoDateString;
     
-    // Explicitly format as dd/mm/yyyy
     const day = date.getDate().toString().padStart(2, '0');
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const year = date.getFullYear();
@@ -23,10 +23,14 @@ export const formatDateTimeVN = (isoDateString: string): string => {
    if (!isoDateString) return '';
    const date = new Date(isoDateString);
    if (isNaN(date.getTime())) return isoDateString;
-   return new Intl.DateTimeFormat('vi-VN', {
-     day: '2-digit', month: '2-digit', year: 'numeric',
-     hour: '2-digit', minute: '2-digit'
-   }).format(date);
+   
+   const day = date.getDate().toString().padStart(2, '0');
+   const month = (date.getMonth() + 1).toString().padStart(2, '0');
+   const year = date.getFullYear();
+   const hours = date.getHours().toString().padStart(2, '0');
+   const minutes = date.getMinutes().toString().padStart(2, '0');
+
+   return `${day}/${month}/${year} ${hours}:${minutes}`;
 };
 
 export const formatCurrencyVN = (amount: number): string => {
@@ -34,10 +38,10 @@ export const formatCurrencyVN = (amount: number): string => {
 };
 
 export const formatNumberInput = (value: number | string): string => {
-  if (!value && value !== 0) return '';
+  if (value === undefined || value === null || value === '') return '';
   // Remove non-digits
   const cleanVal = String(value).replace(/\D/g, '');
-  // Format with dots for thousands
+  // Format with dots for thousands (standard Vietnamese format)
   return cleanVal.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 };
 

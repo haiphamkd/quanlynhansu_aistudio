@@ -245,12 +245,8 @@ const EmployeeManager: React.FC = () => {
         columns={columns}
         actions={(item) => (
           <div className="flex justify-end space-x-2">
-            <button onClick={() => handleEditClick(item)} className="p-1.5 rounded-md text-gray-400 hover:text-teal-600 hover:bg-teal-50 transition-colors">
-              <Pencil size={16} />
-            </button>
-            <button onClick={() => handleDeleteClick(item.id)} className="p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors">
-              <Trash2 size={16} />
-            </button>
+            <AppButton variant="ghost" size="sm" icon={Pencil} onClick={() => handleEditClick(item)} />
+            <AppButton variant="ghost" size="sm" icon={Trash2} onClick={() => handleDeleteClick(item.id)} className="text-red-600 hover:text-red-700 hover:bg-red-50" />
           </div>
         )}
       />

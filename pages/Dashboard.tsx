@@ -44,7 +44,7 @@ const Dashboard: React.FC = () => {
 
         // Process Fund Chart Data (Last 5 transactions)
         setFundData(funds.slice(-5).map(f => ({
-          date: formatDateVN(f.date).substring(0, 5), // Short date for chart dd/mm
+          date: formatDateVN(f.date).substring(0, 5), // dd/mm for compact view
           fullDate: formatDateVN(f.date),
           balance: f.balanceAfter,
           amount: f.amount,

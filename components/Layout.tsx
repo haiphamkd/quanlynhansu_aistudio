@@ -37,16 +37,16 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-gray-900 bg-opacity-50 z-20 lg:hidden backdrop-blur-sm transition-opacity"
+          className="fixed inset-0 bg-gray-900 bg-opacity-50 z-20 md:hidden backdrop-blur-sm transition-opacity"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar - Responsive Drawer/Fixed */}
+      {/* Sidebar - Responsive Drawer for Mobile / Fixed for Tablet+Desktop (md+) */}
       <aside 
-        className={`fixed lg:static inset-y-0 left-0 z-30 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        } flex flex-col shadow-lg lg:shadow-none`}
+        className={`fixed md:static inset-y-0 left-0 z-30 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        } flex flex-col shadow-lg md:shadow-none`}
       >
         {/* Logo Area */}
         <div className="h-16 flex items-center px-6 border-b border-gray-100 shrink-0">
@@ -108,8 +108,8 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
-        {/* Mobile Header */}
-        <header className="lg:hidden h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 z-10 sticky top-0 shadow-sm">
+        {/* Mobile Header (Hidden on md+) */}
+        <header className="md:hidden h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 z-10 sticky top-0 shadow-sm">
           <button onClick={toggleSidebar} className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg focus:outline-none">
             <Menu className="w-6 h-6" />
           </button>
