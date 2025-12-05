@@ -45,13 +45,11 @@ const ProposalManager: React.FC = () => {
     setIsModalOpen(false);
   };
 
-  // Fixed signature to accept string | number to match GenericTable constraints
+  // Fixed signature to accept string | number
   const handleDelete = (id: string | number) => {
-    if(confirm("Bạn có chắc chắn muốn xóa tờ trình này?")) {
-      // TODO: Call API to delete proposal
+    if(confirm("Xóa tờ trình này?")) {
+      // Logic delete would go here
       alert("Đã xóa (Mô phỏng)");
-      // refresh list after delete
-      // loadProposals(); 
     }
   };
 
