@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { LucideIcon } from 'lucide-react';
 
@@ -41,8 +40,11 @@ export const AppButton: React.FC<AppButtonProps> = ({
     lg: "px-6 py-3 text-base"
   };
 
+  // Cast to any to avoid TypeScript errors when passing 'disabled' or other props to non-button elements (e.g. span, Link)
+  const Comp = Component as any;
+
   return (
-    <Component
+    <Comp
       className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
       disabled={disabled || loading}
       {...props}
@@ -56,6 +58,6 @@ export const AppButton: React.FC<AppButtonProps> = ({
         <Icon size={size === 'sm' ? 14 : size === 'md' ? 18 : 20} className={children ? "mr-2" : ""} />
       ) : null}
       {children}
-    </Component>
+    </Comp>
   );
 };
