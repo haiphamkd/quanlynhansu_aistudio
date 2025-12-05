@@ -165,7 +165,7 @@ const Dashboard: React.FC = () => {
             <TrendingUp size={18} className="mr-2 text-gray-400" />
             Biến động quỹ
           </h3>
-          <div className="h-64">
+          <div className="h-64 w-full min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={fundData}>
                 <defs>
@@ -194,7 +194,7 @@ const Dashboard: React.FC = () => {
             <Pill size={18} className="mr-2 text-gray-400" />
             Tình hình cấp phát
           </h3>
-          <div className="h-64">
+          <div className="h-64 w-full min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={reportData} barSize={20}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
@@ -218,3 +218,4 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
+    
