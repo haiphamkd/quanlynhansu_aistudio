@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { LucideIcon } from 'lucide-react';
 
@@ -23,21 +24,21 @@ export const AppButton: React.FC<AppButtonProps> = ({
   as: Component = 'button',
   ...props
 }) => {
-  const baseStyles = "inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+  const baseStyles = "inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-95";
 
   const variants = {
-    primary: "bg-teal-600 text-white hover:bg-teal-700 focus:ring-teal-500 shadow-sm",
-    secondary: "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-teal-500 shadow-sm",
-    danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 shadow-sm",
-    warning: "bg-amber-500 text-white hover:bg-amber-600 focus:ring-amber-500 shadow-sm",
+    primary: "bg-teal-600 text-white hover:bg-teal-700 hover:shadow-md focus:ring-teal-500 shadow-sm border border-transparent",
+    secondary: "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:text-gray-900 focus:ring-teal-500 shadow-sm",
+    danger: "bg-white text-red-600 border border-red-200 hover:bg-red-50 focus:ring-red-500 shadow-sm",
+    warning: "bg-amber-500 text-white hover:bg-amber-600 focus:ring-amber-500 shadow-sm border border-transparent",
     ghost: "text-gray-600 hover:bg-gray-100 hover:text-gray-900 bg-transparent",
-    outline: "border-2 border-teal-600 text-teal-600 hover:bg-teal-50 bg-transparent"
+    outline: "border border-teal-600 text-teal-600 hover:bg-teal-50 bg-transparent"
   };
 
   const sizes = {
     sm: "px-3 py-1.5 text-xs",
     md: "px-4 py-2 text-sm",
-    lg: "px-6 py-3 text-base"
+    lg: "px-6 py-2.5 text-base"
   };
 
   // Cast to any to avoid TypeScript errors when passing 'disabled' or other props to non-button elements (e.g. span, Link)

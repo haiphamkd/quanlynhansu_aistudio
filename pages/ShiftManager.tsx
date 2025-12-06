@@ -75,10 +75,10 @@ const ShiftManager: React.FC = () => {
   ];
 
   const cas = [
-    { name: 'Sáng', color: 'bg-blue-100 text-blue-900 border-blue-200', time: '7:00 - 14:00' },
-    { name: 'Chiều', color: 'bg-orange-100 text-orange-900 border-orange-200', time: '14:00 - 21:00' },
-    { name: 'Đêm', color: 'bg-purple-100 text-purple-900 border-purple-200', time: '21:00 - 7:00' },
-    { name: 'Cả ngày', color: 'bg-teal-100 text-teal-900 border-teal-200', time: '7:00 - 17:00' },
+    { name: 'Sáng', color: 'bg-blue-100 text-blue-900 border-blue-200', time: '7:00 - 11:30' },
+    { name: 'Chiều', color: 'bg-orange-100 text-orange-900 border-orange-200', time: '13:30 - 17:00' },
+    { name: 'Đêm', color: 'bg-purple-100 text-purple-900 border-purple-200', time: '17:00 - 24:00' },
+    { name: 'Cả ngày', color: 'bg-teal-100 text-teal-900 border-teal-200', time: '7:00 trước - 7:00 sau' },
   ];
 
   const EmployeeSelect = ({ value, onChange }: { value: string, onChange: (val: string) => void }) => (

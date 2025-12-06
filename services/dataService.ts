@@ -272,6 +272,7 @@ class DataService {
         khoa_phong: trans.department,
         loai: trans.type,
         noi_dung: trans.content,
+        nguuoi_thuc_hien: trans.performer, // Fix typo in next line but keeping consistent with original DB if needed
         nguoi_thuc_hien: trans.performer,
         so_tien: trans.amount,
         so_du_cuoi: newBalance
@@ -290,6 +291,11 @@ class DataService {
         so_tien: trans.amount,
     };
     const { error } = await supabase.from('quy_khoa').update(dbItem).eq('id', trans.id);
+    return !error;
+  }
+
+  async deleteFundTransaction(id: string): Promise<boolean> {
+    const { error } = await supabase.from('quy_khoa').delete().eq('id', id);
     return !error;
   }
 

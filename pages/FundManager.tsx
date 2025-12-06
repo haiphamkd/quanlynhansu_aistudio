@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Wallet, TrendingUp, TrendingDown, Plus, Filter, Save, X, Pencil, Search, Building } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, Plus, Filter, Save, X, Pencil, Search, Building, Trash2 } from 'lucide-react';
 import GenericTable from '../components/GenericTable';
 import { AppButton } from '../components/AppButton';
 import { FundTransaction, TransactionType } from '../types';
@@ -81,6 +81,13 @@ const FundManager: React.FC = () => {
           performer: item.performer
       });
       setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+      if(confirm("Bạn có chắc chắn muốn xóa giao dịch này?")) {
+          await dataService.deleteFundTransaction(id);
+          loadFunds();
+      }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -212,9 +219,12 @@ const FundManager: React.FC = () => {
           },
         ]}
         actions={(item) => (
-            <div className="flex justify-end">
+            <div className="flex justify-end space-x-1">
                 <button onClick={() => handleEditClick(item)} className="p-1.5 text-gray-400 hover:text-teal-600 bg-gray-50 hover:bg-teal-50 rounded-md transition-colors">
                     <Pencil size={16} />
+                </button>
+                <button onClick={() => handleDelete(item.id)} className="p-1.5 text-gray-400 hover:text-red-600 bg-gray-50 hover:bg-red-50 rounded-md transition-colors">
+                    <Trash2 size={16} />
                 </button>
             </div>
         )}
