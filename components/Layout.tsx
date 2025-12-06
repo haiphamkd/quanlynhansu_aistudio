@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Users, Calendar, Wallet, FileBarChart, 
-  Menu, LogOut, Pill, FileText, Star, Clock, AlertTriangle, Sparkles 
+  Menu, LogOut, Pill, FileText, Star, Clock, AlertTriangle, Sparkles, Building, Settings
 } from 'lucide-react';
 import { MenuItem, User } from '../types';
 import { dataService } from '../services/dataService';
@@ -16,14 +16,15 @@ interface LayoutProps {
 
 const MENU_ITEMS: MenuItem[] = [
   { id: 'dashboard', label: 'Tổng quan', icon: FileBarChart, path: '/' },
-  { id: 'employees', label: 'Nhân sự', icon: Users, path: '/employees' },
+  { id: 'employees', label: 'Nhân sự', icon: Users, path: '/employees', allowedRoles: ['admin', 'manager'] },
   { id: 'shifts', label: 'Lịch trực', icon: Clock, path: '/shifts' },
   { id: 'attendance', label: 'Chấm công', icon: Calendar, path: '/attendance' },
-  { id: 'funds', label: 'Quỹ Khoa', icon: Wallet, path: '/funds' },
+  { id: 'funds', label: 'Quỹ Khoa', icon: Wallet, path: '/funds', allowedRoles: ['admin', 'manager'] },
   { id: 'reports', label: 'Báo cáo đơn', icon: Pill, path: '/reports' },
-  { id: 'evaluation', label: 'Đánh giá năm', icon: Star, path: '/evaluation' },
+  { id: 'evaluation', label: 'Đánh giá năm', icon: Star, path: '/evaluation', allowedRoles: ['admin', 'manager'] },
   { id: 'proposals', label: 'Tờ trình', icon: FileText, path: '/proposals' },
-  { id: 'ai', label: 'Trợ lý AI', icon: Sparkles, path: '/ai-assistant' },
+  { id: 'categories', label: 'Danh mục', icon: Settings, path: '/categories', allowedRoles: ['admin', 'manager'] },
+  { id: 'ai', label: 'Trợ lý AI', icon: Sparkles, path: '/ai-assistant', allowedRoles: ['admin', 'manager'] },
 ];
 
 const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
@@ -32,6 +33,11 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
   const isDemo = dataService.isDemo();
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+
+  const filteredMenu = MENU_ITEMS.filter(item => {
+    if (!item.allowedRoles) return true;
+    return item.allowedRoles.includes(user.role);
+  });
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden font-sans text-gray-900">
@@ -65,7 +71,10 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-sm text-gray-900 truncate">{user.name}</p>
-              <p className="text-[11px] text-gray-500 uppercase tracking-wide font-medium">{user.role}</p>
+              <div className="flex items-center text-[10px] text-gray-500 font-medium">
+                 <span className="uppercase tracking-wide mr-1">{user.role}</span>
+                 {user.department && <span className="truncate border-l border-gray-300 pl-1 text-teal-600">{user.department}</span>}
+              </div>
             </div>
           </div>
         </div>
@@ -73,7 +82,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
         {/* Navigation */}
         <div className="p-4 overflow-y-auto flex-1 custom-scrollbar">
           <nav className="space-y-1">
-            {MENU_ITEMS.map((item) => {
+            {filteredMenu.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
               return (

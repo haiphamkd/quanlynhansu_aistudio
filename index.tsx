@@ -1,3 +1,4 @@
+
 import React, { Component, useState, useEffect, ReactNode, ErrorInfo } from "react";
 import { createRoot } from "react-dom/client";
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
@@ -12,6 +13,7 @@ import EvaluationManager from "./pages/EvaluationManager";
 import ProposalManager from "./pages/ProposalManager";
 import ShiftManager from "./pages/ShiftManager";
 import AiAssistant from "./pages/AiAssistant";
+import CategoryManager from "./pages/CategoryManager";
 import { User } from "./types";
 
 // Error Boundary with proper types
@@ -25,6 +27,9 @@ interface ErrorBoundaryState {
 }
 
 class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  public state: ErrorBoundaryState;
+  public declare props: Readonly<ErrorBoundaryProps>;
+
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { 
@@ -45,7 +50,6 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     if (this.state.hasError) {
       return <div className="p-10 text-red-600">Something went wrong: {this.state.error?.message}</div>;
     }
-    // Access props through the component instance
     return this.props.children;
   }
 }
@@ -91,6 +95,7 @@ const App = () => {
           <Route path="/reports" element={<ReportManager />} />
           <Route path="/evaluation" element={<EvaluationManager />} />
           <Route path="/proposals" element={<ProposalManager />} />
+          <Route path="/categories" element={<CategoryManager />} />
           <Route path="/ai-assistant" element={<AiAssistant />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

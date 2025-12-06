@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Wallet, TrendingUp, TrendingDown, Plus, Filter, Save, X, Pencil, Search } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, Plus, Filter, Save, X, Pencil, Search, Building } from 'lucide-react';
 import GenericTable from '../components/GenericTable';
 import { AppButton } from '../components/AppButton';
 import { FundTransaction, TransactionType } from '../types';
@@ -26,8 +26,9 @@ const FundManager: React.FC = () => {
   const [historyContents, setHistoryContents] = useState<string[]>([]);
 
   const getCurrentUser = () => {
-     try { return JSON.parse(localStorage.getItem('pharmahr_user') || '{}'); } catch { return { name: '' }; }
+     try { return JSON.parse(localStorage.getItem('pharmahr_user') || '{}'); } catch { return { name: '', role: 'staff' }; }
   };
+  const currentUser = getCurrentUser();
 
   useEffect(() => { loadFunds(); }, []);
   
@@ -38,7 +39,8 @@ const FundManager: React.FC = () => {
   }, [funds, dateRange]);
 
   const loadFunds = async () => { 
-      const data = await dataService.getFunds();
+      const deptFilter = currentUser.role === 'admin' ? 'All' : currentUser.department;
+      const data = await dataService.getFunds(deptFilter);
       setFunds(data); 
   };
 
@@ -95,7 +97,7 @@ const FundManager: React.FC = () => {
             content: formData.content,
             amount: amountVal,
             performer: formData.performer,
-            balanceAfter: 0 // Will be handled by service or ignored in display if not recalc
+            balanceAfter: 0 // Will be handled by service
         };
         await dataService.updateFundTransaction(updatedTrans);
     } else {
@@ -104,6 +106,7 @@ const FundManager: React.FC = () => {
             ...formData, 
             amount: amountVal, 
             id: `T-${Date.now()}`, 
+            department: currentUser.department, // Assign current user's dept
             balanceAfter: 0 
         } as FundTransaction;
         await dataService.addFundTransaction(newTrans);
@@ -115,6 +118,13 @@ const FundManager: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-800 tracking-tight flex items-center">
+             <Wallet className="mr-2" /> Quỹ Khoa 
+             {currentUser.department && <span className="ml-2 text-sm font-normal text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full flex items-center"><Building size={12} className="mr-1"/>{currentUser.department}</span>}
+          </h2>
+      </div>
+
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-teal-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">

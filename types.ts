@@ -20,10 +20,30 @@ export enum EvaluationRank {
   LIMITED = "Hoàn thành nhiệm vụ nhưng còn hạn chế"
 }
 
+export const DEPARTMENTS = [
+  "Khoa Dược",
+  "Khoa Nội",
+  "Khoa Ngoại",
+  "Khoa Hồi sức cấp cứu",
+  "Khoa Khám bệnh",
+  "Phòng Kế hoạch tổng hợp",
+  "Phòng Tổ chức cán bộ",
+  "Phòng Tài chính kế toán",
+  "Ban Giám đốc"
+];
+
 // Data Models
+export interface Category {
+  id: number;
+  type: string; // 'ChucVu', 'TrinhDo', 'LyDo', etc.
+  value: string;
+  notes?: string;
+}
+
 export interface Employee {
   id: string; // Mã nhân viên
   fullName: string;
+  department: string; // Khoa/Phòng
   dob: string; // Ngày sinh
   gender: 'Nam' | 'Nữ';
   position: string; // Chức vụ
@@ -50,6 +70,7 @@ export interface Attendance {
   id: string;
   employeeId: string;
   employeeName: string;
+  department?: string;
   date: string; // YYYY-MM-DD
   timeIn?: string; // HH:mm:ss - Giờ quét thực tế
   shift: 'Sáng' | 'Chiều' | 'Cả ngày';
@@ -60,6 +81,7 @@ export interface Attendance {
 export interface FundTransaction {
   id: string;
   date: string;
+  department?: string;
   type: TransactionType;
   content: string;
   performer: string; // Người thực hiện
@@ -70,6 +92,7 @@ export interface FundTransaction {
 export interface PrescriptionReport {
   id: string;
   date: string;
+  department?: string;
   totalIssued: number; // Đã cấp
   notReceived: number; // Chưa nhận
   reason?: string;
@@ -83,6 +106,7 @@ export interface AnnualEvaluation {
   year: number;
   employeeId: string;
   fullName: string;
+  department?: string;
   position: string; // Chức vụ tại thời điểm đánh giá
   
   // Scores
@@ -103,6 +127,7 @@ export interface AnnualEvaluation {
 export interface Proposal {
   id: string;
   date: string;
+  department?: string;
   title: string; 
   proposalNumber?: string; // Số tờ trình
   content: string;
@@ -112,18 +137,22 @@ export interface Proposal {
   notes?: string;
 }
 
+export type UserRole = 'admin' | 'staff' | 'manager';
+
 export interface MenuItem {
   id: string;
   label: string;
   icon: any;
   path: string;
+  allowedRoles?: UserRole[]; // If undefined, allow all
 }
 
 export interface User {
   username: string;
   password?: string; // Only for backend logic
-  role: 'admin' | 'staff' | 'manager'; // Added manager role
+  role: UserRole; 
   name: string;
+  department?: string; // Khoa/Phòng
   employeeId?: string; // Link to employee record
   mustChangePassword?: boolean; // Force change password on first login
 }
@@ -131,9 +160,10 @@ export interface User {
 // New Types
 export interface Shift {
   id: string; // Format: TuanStart-Ca (e.g., 2023-10-02-Sang)
+  department?: string;
   weekStart: string; // YYYY-MM-DD (Monday)
   weekEnd: string; // YYYY-MM-DD (Sunday)
-  ca: 'Sáng' | 'Chiều' | 'Đêm';
+  ca: 'Sáng' | 'Chiều' | 'Đêm' | 'Cả ngày';
   mon: string; // Employee Name(s) or ID
   tue: string;
   wed: string;

@@ -14,7 +14,17 @@ interface GenericTableProps<T> {
   actions?: (item: T) => React.ReactNode;
 }
 
-function GenericTable<T extends { id: string }>({ data, columns, onRowClick, actions }: GenericTableProps<T>) {
+function GenericTable<T extends { id: string | number }>({ data, columns, onRowClick, actions }: GenericTableProps<T>) {
+  const renderCell = (item: T, col: Column<T>) => {
+    if (typeof col.accessor === 'function') {
+      return col.accessor(item);
+    }
+    // Safely access the property and cast to ReactNode compatible type
+    const value = item[col.accessor];
+    if (value === null || value === undefined) return '';
+    return value as unknown as React.ReactNode;
+  };
+
   return (
     <div className="overflow-hidden bg-white rounded-xl shadow-sm border border-gray-200">
       <div className="overflow-x-auto">
@@ -47,9 +57,7 @@ function GenericTable<T extends { id: string }>({ data, columns, onRowClick, act
                 >
                   {columns.map((col, idx) => (
                     <td key={idx} className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {typeof col.accessor === 'function' 
-                        ? col.accessor(item) 
-                        : (item[col.accessor] as unknown as React.ReactNode)}
+                      {renderCell(item, col)}
                     </td>
                   ))}
                   {actions && (

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { FileText, Save, Pencil, Paperclip, X } from 'lucide-react';
+import { FileText, Save, Pencil, Paperclip, X, Building, Trash2 } from 'lucide-react';
 import GenericTable from '../components/GenericTable';
 import { PrescriptionReport } from '../types';
 import { dataService } from '../services/dataService';
@@ -10,7 +10,6 @@ const ReportManager: React.FC = () => {
   const [reports, setReports] = useState<PrescriptionReport[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   
-  // Safe User Retrieval
   const getCurrentUser = () => {
     try {
       const saved = localStorage.getItem('pharmahr_user');
@@ -30,6 +29,7 @@ const ReportManager: React.FC = () => {
     reason: '',
     reporter: currentUser.name,
     reporterId: currentUser.username,
+    department: currentUser.department,
     attachmentUrls: []
   };
 
@@ -40,12 +40,12 @@ const ReportManager: React.FC = () => {
   }, []);
 
   const loadReports = async () => {
-    const data = await dataService.getReports();
+    const deptFilter = currentUser.role === 'admin' ? 'All' : currentUser.department;
+    const data = await dataService.getReports(deptFilter);
     setReports(data);
   };
 
   const handleEdit = (item: PrescriptionReport) => {
-    // Permission Check
     if (currentUser.role !== 'admin' && item.reporterId !== currentUser.username) {
       alert("Bạn chỉ có thể sửa báo cáo do chính mình tạo.");
       return;
@@ -54,9 +54,15 @@ const ReportManager: React.FC = () => {
     setIsEditing(true);
   };
 
+  const handleDelete = async (id: string) => {
+    if (confirm("Bạn có chắc chắn muốn xóa báo cáo này?")) {
+        await dataService.deleteReport(id);
+        loadReports();
+    }
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      // Mock URLs for preview using createObjectURL
       const newFiles = Array.from(e.target.files).map((f: any) => URL.createObjectURL(f));
       setFormData(prev => ({
         ...prev,
@@ -77,8 +83,9 @@ const ReportManager: React.FC = () => {
     const newReport = {
       ...formData,
       id: isEditing ? formData.id : `R-${Date.now()}`,
-      reporter: isEditing ? formData.reporter : currentUser.name, // Keep original reporter if editing
-      reporterId: isEditing ? formData.reporterId : currentUser.username
+      reporter: isEditing ? formData.reporter : currentUser.name,
+      reporterId: isEditing ? formData.reporterId : currentUser.username,
+      department: isEditing ? formData.department : currentUser.department,
     };
 
     await dataService.addReport(newReport); 
@@ -94,6 +101,7 @@ const ReportManager: React.FC = () => {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-800 flex items-center">
         <FileText className="mr-2" /> Báo cáo Đơn thuốc
+        {currentUser.department && <span className="ml-2 text-sm font-normal text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full flex items-center"><Building size={12} className="mr-1"/>{currentUser.department}</span>}
       </h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -199,17 +207,27 @@ const ReportManager: React.FC = () => {
                { header: 'Người báo cáo', accessor: 'reporter' },
              ]}
              actions={(item) => (
-               <button 
-                 onClick={() => handleEdit(item)}
-                 className={`p-1.5 rounded-md transition-colors ${
-                   currentUser.role === 'admin' || item.reporterId === currentUser.username 
-                   ? 'text-teal-600 hover:bg-teal-50' 
-                   : 'text-gray-300 cursor-not-allowed'
-                 }`}
-                 disabled={!(currentUser.role === 'admin' || item.reporterId === currentUser.username)}
-               >
-                 <Pencil size={16} />
-               </button>
+               <div className="flex space-x-1 justify-end">
+                   <button 
+                     onClick={() => handleEdit(item)}
+                     className={`p-1.5 rounded-md transition-colors ${
+                       currentUser.role === 'admin' || item.reporterId === currentUser.username 
+                       ? 'text-teal-600 hover:bg-teal-50' 
+                       : 'text-gray-300 cursor-not-allowed'
+                     }`}
+                     disabled={!(currentUser.role === 'admin' || item.reporterId === currentUser.username)}
+                   >
+                     <Pencil size={16} />
+                   </button>
+                   {(currentUser.role === 'admin' || item.reporterId === currentUser.username) && (
+                       <button 
+                         onClick={() => handleDelete(item.id)}
+                         className="p-1.5 rounded-md text-red-500 hover:bg-red-50 transition-colors"
+                       >
+                         <Trash2 size={16} />
+                       </button>
+                   )}
+               </div>
              )}
            />
         </div>

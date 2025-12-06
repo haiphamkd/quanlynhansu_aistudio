@@ -4,7 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   AreaChart, Area
 } from 'recharts';
-import { Users, TrendingUp, AlertCircle, DollarSign, Pill } from 'lucide-react';
+import { Users, TrendingUp, AlertCircle, DollarSign, Pill, Building } from 'lucide-react';
 import { dataService } from '../services/dataService';
 import { formatDateVN, formatCurrencyVN } from '../utils/helpers';
 
@@ -19,13 +19,20 @@ const Dashboard: React.FC = () => {
   const [fundData, setFundData] = useState<any[]>([]);
   const [reportData, setReportData] = useState<any[]>([]);
 
+  const getCurrentUser = () => {
+    try { return JSON.parse(localStorage.getItem('pharmahr_user') || '{}'); } catch { return { role: 'staff' }; }
+  };
+  const currentUser = getCurrentUser();
+
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const deptFilter = currentUser.role === 'admin' ? 'All' : currentUser.department;
+
         const [employees, funds, reports] = await Promise.all([
-          dataService.getEmployees(),
-          dataService.getFunds(),
-          dataService.getReports()
+          dataService.getEmployees(deptFilter),
+          dataService.getFunds(deptFilter),
+          dataService.getReports(deptFilter)
         ]);
 
         // Process Stats
@@ -74,7 +81,16 @@ const Dashboard: React.FC = () => {
       <div className="flex justify-between items-end">
         <div>
           <h2 className="text-2xl font-bold text-gray-800 tracking-tight">Tổng quan</h2>
-          <p className="text-gray-500 text-sm">Cập nhật tình hình hoạt động khoa Dược</p>
+          <p className="text-gray-500 text-sm flex items-center mt-1">
+             {currentUser.role === 'admin' ? (
+                <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-semibold mr-2">Toàn viện</span>
+             ) : (
+                <span className="bg-teal-100 text-teal-700 px-2 py-0.5 rounded text-xs font-semibold mr-2 flex items-center">
+                    <Building size={12} className="mr-1"/> {currentUser.department}
+                </span>
+             )}
+             Cập nhật tình hình hoạt động
+          </p>
         </div>
         <div className="text-xs text-gray-500 font-medium bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm hidden sm:block">
           {new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
@@ -91,7 +107,7 @@ const Dashboard: React.FC = () => {
              <span className="text-[10px] font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full border border-green-200">ACTIVE</span>
           </div>
           <div>
-            <p className="text-sm text-gray-500 font-medium">Tổng nhân sự</p>
+            <p className="text-sm text-gray-500 font-medium">Nhân sự {currentUser.department ? `(${currentUser.role === 'admin' ? 'Tổng' : 'Khoa'})` : ''}</p>
             <h3 className="text-2xl font-bold text-gray-900 mt-1">{stats.employeeCount}</h3>
           </div>
         </div>
@@ -138,10 +154,12 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Fund Chart */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 min-w-0">
-          <h3 className="font-semibold text-gray-800 mb-6 flex items-center">
-            <TrendingUp size={18} className="mr-2 text-gray-400" />
-            Biến động quỹ
-          </h3>
+          <div className="flex items-center justify-between mb-6">
+             <h3 className="font-semibold text-gray-800 flex items-center">
+               <TrendingUp size={18} className="mr-2 text-gray-400" />
+               Biến động quỹ
+             </h3>
+          </div>
           <div className="h-64 w-full min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={fundData}>
@@ -167,10 +185,12 @@ const Dashboard: React.FC = () => {
 
         {/* Prescription Chart */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 min-w-0">
-          <h3 className="font-semibold text-gray-800 mb-6 flex items-center">
-            <Pill size={18} className="mr-2 text-gray-400" />
-            Tình hình cấp phát
-          </h3>
+          <div className="flex items-center justify-between mb-6">
+             <h3 className="font-semibold text-gray-800 flex items-center">
+               <Pill size={18} className="mr-2 text-gray-400" />
+               Tình hình cấp phát
+             </h3>
+          </div>
           <div className="h-64 w-full min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={reportData} barSize={20}>

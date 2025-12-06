@@ -5,6 +5,7 @@ export const MOCK_EMPLOYEES: Employee[] = [
   {
     id: "NV001",
     fullName: "Nguyễn Văn A",
+    department: "Khoa Dược",
     dob: "1990-05-15",
     gender: "Nam",
     position: "Trưởng khoa",
@@ -25,6 +26,7 @@ export const MOCK_EMPLOYEES: Employee[] = [
   {
     id: "NV002",
     fullName: "Trần Thị B",
+    department: "Khoa Dược",
     dob: "1995-08-20",
     gender: "Nữ",
     position: "Dược sĩ lâm sàng",
