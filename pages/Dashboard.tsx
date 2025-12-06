@@ -1,12 +1,12 @@
-
 import React, { useEffect, useState } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   AreaChart, Area
 } from 'recharts';
-import { Users, TrendingUp, AlertCircle, DollarSign, Pill, Building } from 'lucide-react';
+import { Users, TrendingUp, AlertCircle, DollarSign, Pill, Building, Briefcase, UserCheck, UserX } from 'lucide-react';
 import { dataService } from '../services/dataService';
 import { formatDateVN, formatCurrencyVN } from '../utils/helpers';
+import { Attendance, Employee, EmployeeStatus } from '../types';
 
 const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -18,24 +18,42 @@ const Dashboard: React.FC = () => {
   });
   const [fundData, setFundData] = useState<any[]>([]);
   const [reportData, setReportData] = useState<any[]>([]);
+  
+  // State for attendance tracking
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [attendanceData, setAttendanceData] = useState<Attendance[]>([]);
+  const [employeeData, setEmployeeData] = useState<Employee[]>([]);
+  const [attendanceStats, setAttendanceStats] = useState({
+    total: 0,
+    present: 0,
+    absent: 0,
+    notCheckedIn: 0
+  });
 
   const getCurrentUser = () => {
     try { return JSON.parse(localStorage.getItem('pharmahr_user') || '{}'); } catch { return { role: 'staff' }; }
   };
   const currentUser = getCurrentUser();
 
+  // Main data fetch effect
   useEffect(() => {
     const fetchData = async () => {
       try {
         const deptFilter = currentUser.role === 'admin' ? 'All' : currentUser.department;
 
-        const [employees, funds, reports] = await Promise.all([
+        // Fetch all data including attendance
+        const [employees, funds, reports, attendance] = await Promise.all([
           dataService.getEmployees(deptFilter),
           dataService.getFunds(deptFilter),
-          dataService.getReports(deptFilter)
+          dataService.getReports(deptFilter),
+          dataService.getAttendance(deptFilter)
         ]);
+        
+        // Store data for attendance calculation
+        setEmployeeData(employees);
+        setAttendanceData(attendance);
 
-        // Process Stats
+        // Process existing stats
         const balance = funds.length > 0 ? funds[funds.length - 1].balanceAfter : 0;
         const totalP = reports.reduce((acc, curr) => acc + curr.totalIssued, 0);
         const pending = reports.reduce((acc, curr) => acc + curr.notReceived, 0);
@@ -49,7 +67,7 @@ const Dashboard: React.FC = () => {
 
         // Process Fund Chart Data (Last 5 transactions)
         setFundData(funds.slice(-5).map(f => ({
-          date: formatDateVN(f.date).substring(0, 5), // dd/mm for compact view
+          date: formatDateVN(f.date).substring(0, 5),
           fullDate: formatDateVN(f.date),
           balance: f.balanceAfter,
           amount: f.amount,
@@ -73,6 +91,23 @@ const Dashboard: React.FC = () => {
 
     fetchData();
   }, []);
+
+  // Effect for calculating attendance stats when date or data changes
+  useEffect(() => {
+    if (employeeData.length > 0) {
+      const activeEmployees = employeeData.filter(e => e.status === EmployeeStatus.ACTIVE);
+      const total = activeEmployees.length;
+
+      const recordsForDate = attendanceData.filter(att => att.date === selectedDate);
+      
+      const present = recordsForDate.filter(r => r.status === 'Đi làm' || r.status === 'Trễ').length;
+      const absent = recordsForDate.filter(r => r.status === 'Nghỉ phép' || r.status === 'Nghỉ bệnh').length;
+      
+      const notCheckedIn = total - present - absent;
+
+      setAttendanceStats({ total, present, absent, notCheckedIn });
+    }
+  }, [selectedDate, attendanceData, employeeData]);
 
   if (loading) return <div className="p-8 text-center text-gray-500">Đang tải dữ liệu...</div>;
 
@@ -149,6 +184,44 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {/* Attendance Stats Section */}
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+          <h3 className="font-semibold text-gray-800 flex items-center text-lg">
+            <Briefcase size={20} className="mr-2 text-gray-400" />
+            Tình hình nhân lực
+          </h3>
+          <div className="flex items-center space-x-2 mt-2 sm:mt-0">
+            <span className="text-sm font-medium text-gray-500">Chọn ngày:</span>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-gray-50 shadow-sm"
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+            <p className="text-sm text-gray-500 font-medium">Tổng số</p>
+            <h4 className="text-2xl font-bold text-gray-900 mt-1">{attendanceStats.total}</h4>
+          </div>
+          <div className="bg-green-50 p-4 rounded-lg border border-green-100">
+            <p className="text-sm text-green-700 font-medium flex items-center justify-center"><UserCheck size={14} className="mr-1"/> Đi làm</p>
+            <h4 className="text-2xl font-bold text-green-800 mt-1">{attendanceStats.present}</h4>
+          </div>
+          <div className="bg-red-50 p-4 rounded-lg border border-red-100">
+            <p className="text-sm text-red-700 font-medium flex items-center justify-center"><UserX size={14} className="mr-1"/> Vắng mặt</p>
+            <h4 className="text-2xl font-bold text-red-800 mt-1">{attendanceStats.absent}</h4>
+          </div>
+          <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-100">
+            <p className="text-sm text-yellow-700 font-medium">Chưa chấm công</p>
+            <h4 className="text-2xl font-bold text-yellow-800 mt-1">{attendanceStats.notCheckedIn}</h4>
+          </div>
+        </div>
+      </div>
+
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

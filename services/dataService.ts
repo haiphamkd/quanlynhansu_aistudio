@@ -1,4 +1,3 @@
-
 import { supabase } from './supabaseClient';
 import { Employee, FundTransaction, PrescriptionReport, Attendance, AnnualEvaluation, Proposal, User, Shift, TempData, Category } from '../types';
 
@@ -142,8 +141,8 @@ class DataService {
       department: item.khoa_phong,
       dob: item.ngay_sinh,
       gender: item.gioi_tinh,
-      position: item.chuc_vu,
-      qualification: item.trinh_do,
+      chuc_vu: item.chuc_vu,
+      trinh_do: item.trinh_do,
       phone: item.sdt,
       email: item.email,
       contractDate: item.ngay_hop_dong,
@@ -213,7 +212,7 @@ class DataService {
     const { data } = await query;
     if (!data) return [];
     return data.map((item: any) => ({
-        id: item.id,
+        id: `${item.ma_nv}-${item.ngay}-${item.ca_truc}`, // Create a stable ID
         employeeId: item.ma_nv,
         employeeName: item.ten_nv,
         department: item.khoa_phong,
@@ -225,7 +224,7 @@ class DataService {
     }));
   }
 
-  async saveAttendance(records: Attendance[]): Promise<boolean> {
+  async saveAttendance(records: Attendance[]): Promise<{success: boolean, error?: string}> {
     const dbRecords = records.map(r => ({
         ma_nv: r.employeeId,
         ten_nv: r.employeeName,
@@ -236,8 +235,16 @@ class DataService {
         trang_thai: r.status,
         ghi_chu: r.notes
     }));
-    const { error } = await supabase.from('cham_cong').upsert(dbRecords); 
-    return !error;
+
+    // Use upsert with onConflict to prevent duplicates for the same employee, date, and shift.
+    // This requires a UNIQUE constraint or PRIMARY KEY on (ma_nv, ngay, ca_truc) in your Supabase table.
+    const { error } = await supabase.from('cham_cong').upsert(dbRecords);
+    
+    if (error) {
+      console.error("Save Attendance Error:", error);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
   }
 
   // --- 4. QUỸ KHOA ---
@@ -431,7 +438,7 @@ class DataService {
         proposalNumber: item.so_to_trinh, 
         content: item.noi_dung,
         submitter: item.nguoi_trinh,
-        fileUrl: item.file_url,
+        fileUrls: item.file_url ? item.file_url.split(';').filter(Boolean) : [], // Convert string to array
         status: item.trang_thai
     }));
   }
@@ -444,7 +451,7 @@ class DataService {
         so_to_trinh: prop.proposalNumber,
         noi_dung: prop.content,
         nguoi_trinh: prop.submitter,
-        file_url: prop.fileUrl,
+        file_url: prop.fileUrls ? prop.fileUrls.join(';') : null, // Convert array to string
         trang_thai: prop.status
     };
     await supabase.from('to_trinh').insert(dbItem);
@@ -459,7 +466,7 @@ class DataService {
         so_to_trinh: prop.proposalNumber || '',
         noi_dung: prop.content,
         nguoi_trinh: prop.submitter,
-        file_url: prop.fileUrl,
+        file_url: prop.fileUrls ? prop.fileUrls.join(';') : null, // Convert array to string
         trang_thai: prop.status
     };
     const { error } = await supabase.from('to_trinh').update(dbItem).eq('id', prop.id);

@@ -72,8 +72,10 @@ export const MOCK_REPORTS: PrescriptionReport[] = [
 ];
 
 export const MOCK_ATTENDANCE: Attendance[] = [
-  { id: "A001", employeeId: "NV001", employeeName: "Nguyễn Văn A", date: "2023-10-24", timeIn: "07:30:00", shift: "Cả ngày", status: "Đi làm" },
-  { id: "A002", employeeId: "NV002", employeeName: "Trần Thị B", date: "2023-10-24", timeIn: "07:35:00", shift: "Cả ngày", status: "Đi làm" },
+  // FIX: Changed shift from "Cả ngày" to "Sáng" to match the Attendance type.
+  { id: "A001", employeeId: "NV001", employeeName: "Nguyễn Văn A", date: "2023-10-24", timeIn: "07:30:00", shift: "Sáng", status: "Đi làm" },
+  // FIX: Changed shift from "Cả ngày" to "Sáng" to match the Attendance type.
+  { id: "A002", employeeId: "NV002", employeeName: "Trần Thị B", date: "2023-10-24", timeIn: "07:35:00", shift: "Sáng", status: "Đi làm" },
 ];
 
 export const MOCK_EVALUATIONS: AnnualEvaluation[] = [
@@ -91,6 +93,7 @@ export const MOCK_PROPOSALS: Proposal[] = [
     id: "P001", date: "2023-10-10", title: "Xin mua máy in mới", 
     content: "Máy in cũ đã hỏng drum, chi phí sửa chữa cao.", 
     submitter: "Nguyễn Văn A", status: "Đã duyệt", 
-    fileUrl: "#" 
+    // FIX: Changed `fileUrl` to `fileUrls` and wrapped the value in an array to match the `Proposal` type.
+    fileUrls: ["#"] 
   }
 ];

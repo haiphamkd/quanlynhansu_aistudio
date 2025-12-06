@@ -1,4 +1,3 @@
-
 // Enum definitions
 export enum EmployeeStatus {
   ACTIVE = "Đang làm việc",
@@ -73,7 +72,7 @@ export interface Attendance {
   department?: string;
   date: string; // YYYY-MM-DD
   timeIn?: string; // HH:mm:ss - Giờ quét thực tế
-  shift: 'Sáng' | 'Chiều' | 'Cả ngày';
+  shift: 'Sáng' | 'Chiều';
   status: 'Đi làm' | 'Nghỉ phép' | 'Nghỉ bệnh' | 'Trễ' | 'Khác' | 'Chưa quét';
   notes?: string;
 }
@@ -132,7 +131,7 @@ export interface Proposal {
   proposalNumber?: string; // Số tờ trình
   content: string;
   submitter: string; 
-  fileUrl?: string; // Link drive or Base64
+  fileUrls?: string[]; // Multiple files, stored as string separated by semicolon in DB
   status: 'Chờ duyệt' | 'Đã duyệt' | 'Từ chối';
   notes?: string;
 }

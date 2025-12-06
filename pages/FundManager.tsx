@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Wallet, TrendingUp, TrendingDown, Plus, Filter, Save, X, Pencil, Search, Building, Trash2 } from 'lucide-react';
 import GenericTable from '../components/GenericTable';
@@ -19,9 +18,12 @@ const FundManager: React.FC = () => {
     from: '', 
     to: ''
   });
+
+  // NEW: State for default transaction type
+  const [defaultTransactionType, setDefaultTransactionType] = useState<TransactionType>(TransactionType.INCOME);
   
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0], type: TransactionType.INCOME, content: '', amount: '', performer: ''
+    date: new Date().toISOString().split('T')[0], type: defaultTransactionType, content: '', amount: '', performer: ''
   });
   const [historyContents, setHistoryContents] = useState<string[]>([]);
 
@@ -67,7 +69,13 @@ const FundManager: React.FC = () => {
   const handleOpenModal = () => {
      setEditingId(null);
      const user = getCurrentUser();
-     setFormData({ date: new Date().toISOString().split('T')[0], type: TransactionType.INCOME, content: '', amount: '', performer: user.name || '' });
+     setFormData({ 
+        date: new Date().toISOString().split('T')[0], 
+        type: defaultTransactionType, // Use the default type
+        content: '', 
+        amount: '', 
+        performer: user.name || '' 
+     });
      setIsModalOpen(true);
   };
 
@@ -190,9 +198,33 @@ const FundManager: React.FC = () => {
            )}
         </div>
         
-        <AppButton variant="primary" icon={Plus} onClick={handleOpenModal}>
-           Thêm giao dịch
-        </AppButton>
+        <div className="flex items-center gap-2">
+            <div className="flex items-center bg-gray-100 rounded-lg p-1 border border-gray-200">
+                <button 
+                    onClick={() => setDefaultTransactionType(TransactionType.INCOME)}
+                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                        defaultTransactionType === TransactionType.INCOME 
+                        ? 'bg-white text-emerald-600 shadow-sm' 
+                        : 'text-gray-500 hover:bg-white/50'
+                    }`}
+                >
+                    Mặc định Thu
+                </button>
+                <button 
+                    onClick={() => setDefaultTransactionType(TransactionType.EXPENSE)}
+                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                        defaultTransactionType === TransactionType.EXPENSE 
+                        ? 'bg-white text-rose-600 shadow-sm' 
+                        : 'text-gray-500 hover:bg-white/50'
+                    }`}
+                >
+                    Mặc định Chi
+                </button>
+            </div>
+            <AppButton variant="primary" icon={Plus} onClick={handleOpenModal}>
+               Thêm giao dịch
+            </AppButton>
+        </div>
       </div>
 
       <GenericTable 
