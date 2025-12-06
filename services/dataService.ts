@@ -65,6 +65,7 @@ class DataService {
         const { error } = await supabase.from('nguoi_dung').insert(payload);
 
         if (error) {
+            // Fallback for missing column
             if (error.message.includes('can_doi_mat_khau')) {
                  const { can_doi_mat_khau, ...retryPayload } = payload;
                  const { error: retryError } = await supabase.from('nguoi_dung').insert(retryPayload);
@@ -106,11 +107,24 @@ class DataService {
   }
 
   async adminResetPassword(username: string): Promise<{success: boolean, error?: string}> {
+      // Try to reset with flag
       const { error } = await supabase
         .from('nguoi_dung')
         .update({ mat_khau: '1', can_doi_mat_khau: true })
         .eq('ten_dang_nhap', username);
-      if (error) return { success: false, error: error.message };
+      
+      if (error) {
+          // Fallback if column missing
+          if (error.message.includes('can_doi_mat_khau')) {
+             const { error: retryError } = await supabase
+                .from('nguoi_dung')
+                .update({ mat_khau: '1' })
+                .eq('ten_dang_nhap', username);
+             if (retryError) return { success: false, error: retryError.message };
+             return { success: true };
+          }
+          return { success: false, error: error.message };
+      }
       return { success: true };
   }
 
@@ -499,31 +513,58 @@ class DataService {
       id: item.id,
       type: item.loai,
       value: item.gia_tri,
-      notes: item.ghi_chu
+      notes: item.ghi_chu // undefined if column missing, which is fine for read
     }));
   }
 
-  async addCategory(cat: Omit<Category, 'id'>): Promise<boolean> {
-    const { error } = await supabase.from('danh_muc').insert({
+  async addCategory(cat: Omit<Category, 'id'>): Promise<{success: boolean, error?: string}> {
+    const payload = {
       loai: cat.type,
       gia_tri: cat.value,
       ghi_chu: cat.notes
-    });
-    return !error;
+    };
+    
+    const { error } = await supabase.from('danh_muc').insert(payload);
+    
+    if (error) {
+      // Retry without ghi_chu if column is missing
+      if (error.message.includes('ghi_chu') && (error.message.includes('Could not find') || error.message.includes('does not exist'))) {
+          const { ghi_chu, ...safePayload } = payload;
+          const { error: retryError } = await supabase.from('danh_muc').insert(safePayload);
+          if (retryError) return { success: false, error: retryError.message };
+          return { success: true };
+      }
+      return { success: false, error: error.message };
+    }
+    return { success: true };
   }
 
-  async updateCategory(cat: Category): Promise<boolean> {
-    const { error } = await supabase.from('danh_muc').update({
+  async updateCategory(cat: Category): Promise<{success: boolean, error?: string}> {
+    const payload = {
       loai: cat.type,
       gia_tri: cat.value,
       ghi_chu: cat.notes
-    }).eq('id', cat.id);
-    return !error;
+    };
+
+    const { error } = await supabase.from('danh_muc').update(payload).eq('id', cat.id);
+    
+    if (error) {
+      // Retry without ghi_chu if column is missing
+      if (error.message.includes('ghi_chu') && (error.message.includes('Could not find') || error.message.includes('does not exist'))) {
+          const { ghi_chu, ...safePayload } = payload;
+          const { error: retryError } = await supabase.from('danh_muc').update(safePayload).eq('id', cat.id);
+          if (retryError) return { success: false, error: retryError.message };
+          return { success: true };
+      }
+      return { success: false, error: error.message };
+    }
+    return { success: true };
   }
 
-  async deleteCategory(id: number): Promise<boolean> {
+  async deleteCategory(id: number): Promise<{success: boolean, error?: string}> {
     const { error } = await supabase.from('danh_muc').delete().eq('id', id);
-    return !error;
+    if (error) return { success: false, error: error.message };
+    return { success: true };
   }
 }
 

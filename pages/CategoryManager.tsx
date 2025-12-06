@@ -65,10 +65,15 @@ const CategoryManager: React.FC = () => {
     if (confirm("Bạn có chắc chắn muốn xóa danh mục này?")) {
       setLoading(true); // Hiện loading bảng
       try {
-        await dataService.deleteCategory(id);
-        await loadData(); // Tải lại dữ liệu sau khi xóa
+        const res = await dataService.deleteCategory(id);
+        if (res.success) {
+           await loadData(); // Tải lại dữ liệu sau khi xóa
+        } else {
+           alert("Xóa thất bại: " + res.error);
+        }
       } catch (error) {
         alert("Xóa thất bại. Vui lòng thử lại.");
+      } finally {
         setLoading(false);
       }
     }
@@ -79,18 +84,18 @@ const CategoryManager: React.FC = () => {
     setSubmitting(true); // Bắt đầu loading nút Lưu
     
     try {
-      let success = false;
+      let result;
       if (editingCat) {
-        success = await dataService.updateCategory({ ...editingCat, ...formData });
+        result = await dataService.updateCategory({ ...editingCat, ...formData });
       } else {
-        success = await dataService.addCategory(formData);
+        result = await dataService.addCategory(formData);
       }
 
-      if (success) {
+      if (result.success) {
         await loadData(); // Tải lại dữ liệu mới nhất
         setIsModalOpen(false); // Chỉ đóng modal khi đã tải xong
       } else {
-        alert("Lưu dữ liệu thất bại. Vui lòng kiểm tra kết nối.");
+        alert("Lưu thất bại: " + result.error);
       }
     } catch (error) {
       console.error(error);
