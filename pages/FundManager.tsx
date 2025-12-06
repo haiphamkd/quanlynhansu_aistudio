@@ -14,6 +14,9 @@ const FundManager: React.FC = () => {
   const [totals, setTotals] = useState({ balance: 0, income: 0, expense: 0 });
   const [editingId, setEditingId] = useState<string | null>(null);
   
+  // Search State
+  const [searchTerm, setSearchTerm] = useState('');
+
   // Date filter state - default empty to show all
   const [dateRange, setDateRange] = useState({
     from: '', 
@@ -41,7 +44,7 @@ const FundManager: React.FC = () => {
   useEffect(() => { 
     filterData(); 
     setHistoryContents([...new Set(funds.map(f => f.content))]); 
-  }, [funds, dateRange]);
+  }, [funds, dateRange, searchTerm]);
 
   const loadFunds = async () => { 
       // Admin and Operator see All, Manager sees their Dept
@@ -53,18 +56,29 @@ const FundManager: React.FC = () => {
   const filterData = () => {
     let filtered = funds;
     
-    // Only filter if dates are selected
+    // 1. Date Filter
     if (dateRange.from && dateRange.to) {
-        filtered = funds.filter(f => f.date >= dateRange.from && f.date <= dateRange.to);
+        filtered = filtered.filter(f => f.date >= dateRange.from && f.date <= dateRange.to);
+    }
+
+    // 2. Text Search (Content or Performer)
+    if (searchTerm) {
+        const lowerTerm = searchTerm.toLowerCase();
+        filtered = filtered.filter(f => 
+            f.content.toLowerCase().includes(lowerTerm) || 
+            f.performer.toLowerCase().includes(lowerTerm)
+        );
     }
     
     setFilteredFunds(filtered);
     
-    // Calculate stats based on ALL data or FILTERED data? usually Filtered
+    // Calculate stats based on FILTERED data
     const income = filtered.filter(f => f.type === TransactionType.INCOME).reduce((sum, f) => sum + f.amount, 0);
     const expense = filtered.filter(f => f.type === TransactionType.EXPENSE).reduce((sum, f) => sum + f.amount, 0);
     
-    // Balance is always the latest record's balance (if sorted by time) or calculated
+    // Balance is usually global, but if showing filtered view, we might want to show filtered totals.
+    // However, "Balance" usually implies current cash on hand, which shouldn't change by filter unless we calculate running balance.
+    // For now, keep Balance as the latest record's balance (Global), but Income/Expense follow filter.
     const currentBalance = funds.length > 0 ? funds[funds.length - 1].balanceAfter : 0;
     
     setTotals({ balance: currentBalance, income, expense });
@@ -148,89 +162,109 @@ const FundManager: React.FC = () => {
           </h2>
       </div>
 
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-teal-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+      {/* Overview Cards - Compact Height */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-teal-600 rounded-xl p-4 text-white shadow-lg relative overflow-hidden flex flex-col justify-center">
           <div className="relative z-10">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="font-medium text-teal-100 text-sm uppercase tracking-wider">TỔNG QUỸ HIỆN TẠI</h3>
-              <Wallet className="text-teal-200" size={20} />
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="font-medium text-teal-100 text-xs uppercase tracking-wider">TỔNG QUỸ HIỆN TẠI</h3>
+              <Wallet className="text-teal-200" size={18} />
             </div>
-            <p className="text-3xl font-bold tracking-tight">{formatCurrencyVN(totals.balance)}</p>
+            <p className="text-2xl font-bold tracking-tight">{formatCurrencyVN(totals.balance)}</p>
           </div>
-          <div className="absolute -bottom-4 -right-4 bg-white opacity-5 w-24 h-24 rounded-full"></div>
+          <div className="absolute -bottom-4 -right-4 bg-white opacity-5 w-16 h-16 rounded-full"></div>
         </div>
-        <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
+        <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex flex-col justify-center">
+          <div className="flex items-center justify-between mb-1">
              <h3 className="font-medium text-gray-500 text-xs uppercase tracking-wider">Tổng Thu (Theo lọc)</h3>
-             <div className="bg-emerald-50 p-1.5 rounded-md text-emerald-600"><TrendingUp size={16} /></div>
+             <div className="bg-emerald-50 p-1 rounded-md text-emerald-600"><TrendingUp size={14} /></div>
           </div>
-          <p className="text-2xl font-bold text-gray-800">{formatCurrencyVN(totals.income)}</p>
+          <p className="text-xl font-bold text-gray-800">{formatCurrencyVN(totals.income)}</p>
         </div>
-        <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
+        <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex flex-col justify-center">
+          <div className="flex items-center justify-between mb-1">
              <h3 className="font-medium text-gray-500 text-xs uppercase tracking-wider">Tổng Chi (Theo lọc)</h3>
-             <div className="bg-rose-50 p-1.5 rounded-md text-rose-600"><TrendingDown size={16} /></div>
+             <div className="bg-rose-50 p-1 rounded-md text-rose-600"><TrendingDown size={14} /></div>
           </div>
-          <p className="text-2xl font-bold text-gray-800">{formatCurrencyVN(totals.expense)}</p>
+          <p className="text-xl font-bold text-gray-800">{formatCurrencyVN(totals.expense)}</p>
         </div>
       </div>
 
       {/* Controls */}
-      <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row justify-between items-end md:items-center gap-4">
-        <div className="flex items-center gap-4 w-full md:w-auto">
-           <div className="text-sm font-semibold text-gray-700 whitespace-nowrap">Bộ lọc thời gian:</div>
-           <div className="flex items-center space-x-2 bg-gray-50 rounded-lg p-1 border border-gray-200">
-             <input 
-                type="date" 
-                value={dateRange.from} 
-                onChange={e => setDateRange({...dateRange, from: e.target.value})} 
-                className="bg-transparent text-sm focus:outline-none w-32 px-2 py-1 text-gray-600"
-                placeholder="Từ ngày"
-             />
-             <span className="text-gray-400">-</span>
-             <input 
-                type="date" 
-                value={dateRange.to} 
-                onChange={e => setDateRange({...dateRange, to: e.target.value})} 
-                className="bg-transparent text-sm focus:outline-none w-32 px-2 py-1 text-gray-600"
-                placeholder="Đến ngày"
-             />
-           </div>
-           {(dateRange.from || dateRange.to) && (
-             <button onClick={() => setDateRange({from: '', to: ''})} className="text-xs text-red-500 hover:underline">Xóa lọc</button>
-           )}
-        </div>
-        
-        {canEdit && (
-        <div className="flex items-center gap-2">
-            <div className="flex items-center bg-gray-100 rounded-lg p-1 border border-gray-200">
-                <button 
-                    onClick={() => setDefaultTransactionType(TransactionType.INCOME)}
-                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
-                        defaultTransactionType === TransactionType.INCOME 
-                        ? 'bg-white text-emerald-600 shadow-sm' 
-                        : 'text-gray-500 hover:bg-white/50'
-                    }`}
-                >
-                    Mặc định Thu
-                </button>
-                <button 
-                    onClick={() => setDefaultTransactionType(TransactionType.EXPENSE)}
-                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
-                        defaultTransactionType === TransactionType.EXPENSE 
-                        ? 'bg-white text-rose-600 shadow-sm' 
-                        : 'text-gray-500 hover:bg-white/50'
-                    }`}
-                >
-                    Mặc định Chi
-                </button>
+      <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4">
+            {/* Search and Date Filter */}
+            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                 {/* Search Box */}
+                 <div className="relative w-full sm:w-64">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Search className="h-4 w-4 text-gray-400" />
+                    </div>
+                    <input
+                        type="text"
+                        className="block w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-sm focus:bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                        placeholder="Tìm nội dung, người thực hiện..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                 </div>
+
+                 {/* Date Filter */}
+                 <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <div className="flex items-center space-x-2 bg-gray-50 rounded-lg p-1 border border-gray-200 w-full sm:w-auto">
+                        <input 
+                            type="date" 
+                            value={dateRange.from} 
+                            onChange={e => setDateRange({...dateRange, from: e.target.value})} 
+                            className="bg-transparent text-xs focus:outline-none w-full sm:w-28 px-2 py-1 text-gray-600"
+                            placeholder="Từ ngày"
+                        />
+                        <span className="text-gray-400">-</span>
+                        <input 
+                            type="date" 
+                            value={dateRange.to} 
+                            onChange={e => setDateRange({...dateRange, to: e.target.value})} 
+                            className="bg-transparent text-xs focus:outline-none w-full sm:w-28 px-2 py-1 text-gray-600"
+                            placeholder="Đến ngày"
+                        />
+                    </div>
+                    {(dateRange.from || dateRange.to) && (
+                        <button onClick={() => setDateRange({from: '', to: ''})} className="text-xs text-red-500 hover:underline whitespace-nowrap">Xóa lọc</button>
+                    )}
+                 </div>
             </div>
-            <AppButton variant="primary" icon={Plus} onClick={handleOpenModal}>
-               Thêm giao dịch
-            </AppButton>
+            
+            {/* Buttons */}
+            {canEdit && (
+            <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end">
+                <div className="flex items-center bg-gray-100 rounded-lg p-1 border border-gray-200">
+                    <button 
+                        onClick={() => setDefaultTransactionType(TransactionType.INCOME)}
+                        className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                            defaultTransactionType === TransactionType.INCOME 
+                            ? 'bg-white text-emerald-600 shadow-sm' 
+                            : 'text-gray-500 hover:bg-white/50'
+                        }`}
+                    >
+                        Thu
+                    </button>
+                    <button 
+                        onClick={() => setDefaultTransactionType(TransactionType.EXPENSE)}
+                        className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                            defaultTransactionType === TransactionType.EXPENSE 
+                            ? 'bg-white text-rose-600 shadow-sm' 
+                            : 'text-gray-500 hover:bg-white/50'
+                        }`}
+                    >
+                        Chi
+                    </button>
+                </div>
+                <AppButton variant="primary" icon={Plus} onClick={handleOpenModal} className="shrink-0">
+                Thêm GD
+                </AppButton>
+            </div>
+            )}
         </div>
-        )}
       </div>
 
       <GenericTable 
