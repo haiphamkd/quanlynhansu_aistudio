@@ -263,7 +263,8 @@ class DataService {
     let query = supabase.from('quy_khoa').select('so_du_cuoi').order('id', { ascending: false }).limit(1);
     if (trans.department) query = query.eq('khoa_phong', trans.department);
     
-    const { data: lastTrans } = await query.single();
+    // Changed single() to maybeSingle() to handle empty table case safely
+    const { data: lastTrans } = await query.maybeSingle();
     const lastBalance = lastTrans ? lastTrans.so_du_cuoi : 0;
     const newBalance = trans.type === 'Thu' ? lastBalance + trans.amount : lastBalance - trans.amount;
     
@@ -272,12 +273,14 @@ class DataService {
         khoa_phong: trans.department,
         loai: trans.type,
         noi_dung: trans.content,
-        nguuoi_thuc_hien: trans.performer, // Fix typo in next line but keeping consistent with original DB if needed
         nguoi_thuc_hien: trans.performer,
         so_tien: trans.amount,
         so_du_cuoi: newBalance
     };
-    await supabase.from('quy_khoa').insert(dbItem);
+    
+    const { error } = await supabase.from('quy_khoa').insert(dbItem);
+    if (error) throw new Error(error.message);
+    
     return { ...trans, balanceAfter: newBalance };
   }
 

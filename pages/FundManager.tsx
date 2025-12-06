@@ -95,32 +95,36 @@ const FundManager: React.FC = () => {
     
     const amountVal = parseNumberInput(formData.amount);
     
-    if (editingId) {
-        // Edit existing
-        const updatedTrans: FundTransaction = {
-            id: editingId,
-            date: formData.date,
-            type: formData.type,
-            content: formData.content,
-            amount: amountVal,
-            performer: formData.performer,
-            balanceAfter: 0 // Will be handled by service
-        };
-        await dataService.updateFundTransaction(updatedTrans);
-    } else {
-        // Add new
-        const newTrans = { 
-            ...formData, 
-            amount: amountVal, 
-            id: `T-${Date.now()}`, 
-            department: currentUser.department, // Assign current user's dept
-            balanceAfter: 0 
-        } as FundTransaction;
-        await dataService.addFundTransaction(newTrans);
-    }
+    try {
+        if (editingId) {
+            // Edit existing
+            const updatedTrans: FundTransaction = {
+                id: editingId,
+                date: formData.date,
+                type: formData.type,
+                content: formData.content,
+                amount: amountVal,
+                performer: formData.performer,
+                balanceAfter: 0 // Will be handled by service
+            };
+            await dataService.updateFundTransaction(updatedTrans);
+        } else {
+            // Add new
+            const newTrans = { 
+                ...formData, 
+                amount: amountVal, 
+                id: `T-${Date.now()}`, 
+                department: currentUser.department, // Assign current user's dept
+                balanceAfter: 0 
+            } as FundTransaction;
+            await dataService.addFundTransaction(newTrans);
+        }
 
-    setIsModalOpen(false);
-    loadFunds();
+        setIsModalOpen(false);
+        loadFunds();
+    } catch (err: any) {
+        alert("Có lỗi xảy ra: " + err.message);
+    }
   };
 
   return (
