@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Star, Award, CheckCircle, Pencil, Trash2, X, UploadCloud, FileText, Eye, Paperclip, Download, ChevronLeft, ChevronRight, File as FileIcon } from 'lucide-react';
 import GenericTable from '../components/GenericTable';
 import { AnnualEvaluation, Employee, EvaluationRank, EmployeeStatus } from '../types';
 import { dataService } from '../services/dataService';
 import { AppButton } from '../components/AppButton';
+import SearchableSelect from '../components/SearchableSelect';
 
 // --- File Preview Modal (Copied from ReportManager for consistency) ---
 const FilePreviewModal: React.FC<{ files: string[], startIndex: number, onClose: () => void }> = ({ files, startIndex, onClose }) => {
@@ -218,6 +218,11 @@ const EvaluationManager: React.FC = () => {
   };
 
   const filteredEvaluations = evaluations.filter(e => e.year === year);
+  
+  const employeeOptions = employees.map(e => ({
+      value: e.id,
+      label: `${e.fullName} (${e.position})`
+  }));
 
   return (
     <div className="space-y-6">
@@ -257,18 +262,13 @@ const EvaluationManager: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
              <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Chọn nhân viên</label>
-              <select 
-                value={formData.employeeId}
-                onChange={(e) => setFormData({...formData, employeeId: e.target.value})}
-                className="block w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 bg-white"
-                required
-                disabled={!!editingId}
-              >
-                <option value="">-- Chọn nhân viên --</option>
-                {employees.map(e => (
-                  <option key={e.id} value={e.id}>{e.fullName} ({e.position})</option>
-                ))}
-              </select>
+              <SearchableSelect 
+                 options={employeeOptions}
+                 value={formData.employeeId}
+                 onChange={(value) => setFormData({...formData, employeeId: value})}
+                 placeholder="-- Tìm và chọn nhân viên --"
+                 disabled={!!editingId}
+              />
             </div>
 
             <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
@@ -416,11 +416,12 @@ const EvaluationManager: React.FC = () => {
               { 
                 header: 'Xếp loại', 
                 accessor: (item) => (
-                  <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
-                    item.rank === EvaluationRank.EXCELLENT ? 'bg-purple-100 text-purple-800 border border-purple-200' :
-                    item.rank === EvaluationRank.GOOD ? 'bg-green-100 text-green-800 border border-green-200' :
-                    item.rank === EvaluationRank.COMPLETED ? 'bg-blue-100 text-blue-800 border border-blue-200' :
-                    'bg-yellow-100 text-yellow-800 border border-yellow-200'
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${
+                    item.rank === EvaluationRank.EXCELLENT ? 'bg-purple-100 text-purple-800 border-purple-200' :
+                    item.rank === EvaluationRank.GOOD ? 'bg-green-100 text-green-800 border-green-200' :
+                    item.rank === EvaluationRank.COMPLETED ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                    item.rank === EvaluationRank.NOT_COMPLETED ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                    'bg-gray-100 text-gray-600 border-gray-200'
                   }`}>
                     {item.rank}
                   </span>

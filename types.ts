@@ -17,7 +17,8 @@ export enum EvaluationRank {
   EXCELLENT = "Hoàn thành xuất sắc nhiệm vụ",
   GOOD = "Hoàn thành tốt nhiệm vụ",
   COMPLETED = "Hoàn thành nhiệm vụ",
-  LIMITED = "Hoàn thành nhiệm vụ nhưng còn hạn chế"
+  NOT_COMPLETED = "Chưa hoàn thành nhiệm vụ",
+  NOT_RANKED = "Không xếp loại"
 }
 
 export const DEPARTMENTS = [
