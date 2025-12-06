@@ -402,7 +402,8 @@ class DataService {
         rank: item.xep_loai,
         rewardProposal: item.de_nghi_khen,
         rewardTitle: item.danh_hieu,
-        notes: item.ghi_chu
+        notes: item.ghi_chu,
+        attachmentUrl: item.dinh_kem
     }));
   }
 
@@ -420,9 +421,22 @@ class DataService {
         xep_loai: evalItem.rank,
         de_nghi_khen: evalItem.rewardProposal,
         danh_hieu: evalItem.rewardTitle,
-        ghi_chu: evalItem.notes
+        ghi_chu: evalItem.notes,
+        dinh_kem: evalItem.attachmentUrl
     };
-    await supabase.from('danh_gia').insert(dbItem);
+    
+    const { error } = await supabase.from('danh_gia').insert(dbItem);
+    
+    if (error) {
+       // Fallback logic for missing column 'dinh_kem'
+       if (error.message.includes('dinh_kem')) {
+          const { dinh_kem, ...safePayload } = dbItem;
+          await supabase.from('danh_gia').insert(safePayload);
+       } else {
+          throw new Error(error.message);
+       }
+    }
+    
     return evalItem;
   }
 
@@ -440,10 +454,20 @@ class DataService {
         xep_loai: evalItem.rank,
         de_nghi_khen: evalItem.rewardProposal,
         danh_hieu: evalItem.rewardTitle,
-        ghi_chu: evalItem.notes
+        ghi_chu: evalItem.notes,
+        dinh_kem: evalItem.attachmentUrl
     };
     const { error } = await supabase.from('danh_gia').update(dbItem).eq('id', evalItem.id);
-    return !error;
+    
+    if (error) {
+       if (error.message.includes('dinh_kem')) {
+          const { dinh_kem, ...safePayload } = dbItem;
+          const { error: retryError } = await supabase.from('danh_gia').update(safePayload).eq('id', evalItem.id);
+          return !retryError;
+       }
+       return false;
+    }
+    return true;
   }
 
   async deleteEvaluation(id: string): Promise<boolean> {

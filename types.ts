@@ -121,6 +121,7 @@ export interface AnnualEvaluation {
   rewardProposal: 'Sở Y tế' | 'Bệnh viện' | 'Không' | string;
   rewardTitle: 'Chiến sĩ thi đua' | 'Giấy khen' | 'Lao động tiên tiến' | 'Không' | string;
   
+  attachmentUrl?: string; // File minh chứng/báo cáo
   notes?: string;
 }
 

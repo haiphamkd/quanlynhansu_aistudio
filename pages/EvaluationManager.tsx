@@ -1,9 +1,80 @@
 
 import React, { useState, useEffect } from 'react';
-import { Star, Award, CheckCircle, Pencil, Trash2, X } from 'lucide-react';
+import { Star, Award, CheckCircle, Pencil, Trash2, X, UploadCloud, FileText, Eye, Paperclip, Download, ChevronLeft, ChevronRight, File as FileIcon } from 'lucide-react';
 import GenericTable from '../components/GenericTable';
 import { AnnualEvaluation, Employee, EvaluationRank, EmployeeStatus } from '../types';
 import { dataService } from '../services/dataService';
+import { AppButton } from '../components/AppButton';
+
+// --- File Preview Modal (Copied from ReportManager for consistency) ---
+const FilePreviewModal: React.FC<{ files: string[], startIndex: number, onClose: () => void }> = ({ files, startIndex, onClose }) => {
+  const [currentIndex, setCurrentIndex] = useState(startIndex);
+  const currentFile = files[currentIndex];
+
+  const getFileType = (base64: string) => {
+    if (base64.startsWith('data:image/')) return 'image';
+    if (base64.startsWith('data:application/pdf')) return 'pdf';
+    return 'other';
+  };
+  
+  const fileType = getFileType(currentFile);
+  const fileName = `download.${fileType === 'pdf' ? 'pdf' : 'png'}`;
+
+  const handleDownload = () => {
+    const link = document.createElement('a');
+    link.href = currentFile;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+  
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col relative overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="flex-none p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+          <h3 className="font-bold text-gray-800">Xem tài liệu đính kèm</h3>
+          <div className="flex items-center space-x-2">
+             <span className="text-sm font-mono bg-gray-200 text-gray-600 px-2 py-1 rounded-md">{currentIndex + 1} / {files.length}</span>
+             <AppButton variant="secondary" size="sm" icon={Download} onClick={handleDownload}>Tải xuống</AppButton>
+             <button onClick={onClose} className="p-2 text-gray-400 hover:bg-gray-200 rounded-full"><X size={20}/></button>
+          </div>
+        </div>
+        
+        <div className="flex-1 flex items-center justify-center bg-gray-100 relative overflow-hidden">
+          {fileType === 'image' && <img src={currentFile} className="max-w-full max-h-full object-contain" />}
+          {fileType === 'pdf' && <iframe src={currentFile} className="w-full h-full border-none" title="PDF Preview"/>}
+          {fileType === 'other' && (
+            <div className="text-center text-gray-500 flex flex-col items-center">
+              <FileIcon size={64} className="mb-4" />
+              <p className="font-semibold">Không hỗ trợ xem trước</p>
+              <AppButton variant="primary" icon={Download} onClick={handleDownload} className="mt-4">Tải xuống</AppButton>
+            </div>
+          )}
+          
+          {/* Navigation */}
+          {files.length > 1 && (
+            <>
+              <button 
+                onClick={() => setCurrentIndex(p => (p - 1 + files.length) % files.length)}
+                className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-3 rounded-full shadow-lg transition-transform active:scale-90"
+              >
+                <ChevronLeft />
+              </button>
+              <button 
+                onClick={() => setCurrentIndex(p => (p + 1) % files.length)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-3 rounded-full shadow-lg transition-transform active:scale-90"
+              >
+                <ChevronRight />
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
 const EvaluationManager: React.FC = () => {
   const [evaluations, setEvaluations] = useState<AnnualEvaluation[]>([]);
@@ -11,6 +82,10 @@ const EvaluationManager: React.FC = () => {
   const [year, setYear] = useState(new Date().getFullYear());
   const [editingId, setEditingId] = useState<string | null>(null);
   
+  // Preview State
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [previewFile, setPreviewFile] = useState<string>('');
+
   // Generate years from 2015 to Current Year + 1
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: currentYear - 2015 + 2 }, (_, i) => currentYear + 1 - i);
@@ -18,10 +93,11 @@ const EvaluationManager: React.FC = () => {
   const initialFormState = {
     employeeId: '',
     professional: 0, attitude: 0, discipline: 0,
-    rank: EvaluationRank.COMPLETED,
+    rank: EvaluationRank.GOOD, // Updated default: Hoàn thành tốt nhiệm vụ
     rewardProposal: 'Không',
-    rewardTitle: 'Lao động tiên tiến',
-    notes: ''
+    rewardTitle: 'Không', // Updated default: Không
+    notes: '',
+    attachmentUrl: ''
   };
 
   const [formData, setFormData] = useState(initialFormState);
@@ -49,7 +125,8 @@ const EvaluationManager: React.FC = () => {
         rank: item.rank,
         rewardProposal: item.rewardProposal,
         rewardTitle: item.rewardTitle,
-        notes: item.notes || ''
+        notes: item.notes || '',
+        attachmentUrl: item.attachmentUrl || ''
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -68,6 +145,23 @@ const EvaluationManager: React.FC = () => {
   const handleCancel = () => {
     setEditingId(null);
     setFormData(initialFormState);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({ ...formData, attachmentUrl: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleViewFile = (fileUrl: string) => {
+      if (!fileUrl) return;
+      setPreviewFile(fileUrl);
+      setIsPreviewOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -104,7 +198,8 @@ const EvaluationManager: React.FC = () => {
       rank: formData.rank,
       rewardProposal: formData.rewardProposal,
       rewardTitle: formData.rewardTitle,
-      notes: formData.notes
+      notes: formData.notes,
+      attachmentUrl: formData.attachmentUrl
     };
 
     if (editingId) {
@@ -248,6 +343,31 @@ const EvaluationManager: React.FC = () => {
                </div>
             </div>
 
+            {/* Attachments Section */}
+            <div>
+               <label className="block text-sm font-medium text-gray-700 mb-1">Tài liệu đính kèm (Báo cáo/Ảnh)</label>
+               <div className="border border-gray-300 border-dashed rounded-lg p-3 bg-gray-50 hover:bg-white transition-colors">
+                  {formData.attachmentUrl ? (
+                     <div className="flex items-center justify-between bg-white p-2 rounded border border-gray-200">
+                        <div className="flex items-center space-x-2 truncate">
+                           <FileText size={16} className="text-teal-600 shrink-0"/>
+                           <span className="text-xs text-gray-600 truncate max-w-[150px]">File đính kèm</span>
+                        </div>
+                        <div className="flex space-x-1">
+                           <button type="button" onClick={() => handleViewFile(formData.attachmentUrl)} className="p-1 hover:bg-gray-100 rounded text-blue-500"><Eye size={14}/></button>
+                           <button type="button" onClick={() => setFormData({...formData, attachmentUrl: ''})} className="p-1 hover:bg-red-50 rounded text-red-500"><X size={14}/></button>
+                        </div>
+                     </div>
+                  ) : (
+                     <label className="flex items-center justify-center cursor-pointer py-2">
+                        <UploadCloud size={20} className="text-gray-400 mr-2"/>
+                        <span className="text-xs text-gray-500">Tải lên file</span>
+                        <input type="file" className="hidden" onChange={handleFileUpload} />
+                     </label>
+                  )}
+               </div>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Ghi chú</label>
               <textarea 
@@ -311,6 +431,15 @@ const EvaluationManager: React.FC = () => {
                    {item.rewardProposal === 'Không' && item.rewardTitle === 'Không' && <span className="text-gray-400">-</span>}
                 </div>
               )},
+              { 
+                 header: '', 
+                 accessor: (item) => item.attachmentUrl ? (
+                    <button onClick={() => handleViewFile(item.attachmentUrl!)} className="text-blue-500 hover:bg-blue-50 p-1 rounded" title="Xem đính kèm">
+                        <Paperclip size={16}/>
+                    </button>
+                 ) : null,
+                 className: 'w-10'
+              },
             ]}
             actions={(item) => (
                <div className="flex space-x-1 justify-end">
@@ -333,6 +462,8 @@ const EvaluationManager: React.FC = () => {
           />
         </div>
       </div>
+      
+      {isPreviewOpen && <FilePreviewModal files={[previewFile]} startIndex={0} onClose={() => setIsPreviewOpen(false)} />}
     </div>
   );
 };
